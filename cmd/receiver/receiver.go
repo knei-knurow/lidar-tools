@@ -1,30 +1,39 @@
 package main
 
 import (
-	"bufio"
-	"errors"
+	"flag"
 	"fmt"
-	"io"
 	"log"
-	"os"
+	"net"
 	"strings"
 )
 
-func main() {
-	reader := bufio.NewReader(os.Stdin)
+var port string
 
-	for true {
-		str, err := reader.ReadString('\n')
+func init() {
+	flag.StringVar(&port, "port", ":8080", "port to listen on")
+}
+
+func main() {
+	flag.Parse()
+
+	pckt, err := net.ListenPacket("udp", port)
+	if err != nil {
+		log.Fatalf("receiver: error listening on port %s: %v\n", port, err)
+	}
+	fmt.Printf("receiver: listening on port %s\n", port)
+	defer pckt.Close()
+
+	for {
+		buf := make([]byte, 65536)
+		n, addr, err := pckt.ReadFrom(buf)
 		if err != nil {
-			if errors.Is(err, io.EOF) {
-				log.Fatalln("receiver: data stream ended")
-			} else {
-				log.Fatalln("receiver: unknown error:", err)
-			}
+			log.Fatalf("receiver: error reading from buffer: %v\n", err)
 		}
 
-		str = strings.TrimSuffix(str, "\n")
+		text := string(buf[0:n])
+		text = strings.TrimSpace(text)
 
-		fmt.Printf("receiver: new data: %s\n", str)
+		fmt.Printf("receiver: %d bytes received from %s --> %s\n", n, addr, text)
 	}
 }
