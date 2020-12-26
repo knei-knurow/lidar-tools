@@ -7,18 +7,22 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"strings"
+	"time"
 )
 
 var (
 	filePath string
-	host     string
+	port     string
+	dest     string
 )
 
 func init() {
 	flag.StringVar(&filePath, "file-path", "", ".txt file containing valid cloud series")
-	flag.StringVar(&host, "host", "", "ip address of the host which should receive the data")
+	flag.StringVar(&dest, "dest", "192.168.1.1", "address to send packets to")
+	flag.StringVar(&port, "port", ":8080", "port on destAddress to route packets to")
 }
 
 func main() {
@@ -29,6 +33,13 @@ func main() {
 	if err != nil {
 		log.Fatalln("sender: failed to open input file")
 	}
+
+	conn, err := net.Dial("udp", dest+port)
+	if err != nil {
+		log.Fatalln("sender: failed to dial")
+	}
+	conn.SetDeadline(time.Now().Add(time.Second)) // too long anyway
+	defer conn.Close()
 
 	reader := bufio.NewReader(f)
 
@@ -43,14 +54,13 @@ func main() {
 			}
 			log.Fatalln("sender:", err)
 		}
-		line = strings.TrimSuffix(line, "\n")
 
 		if strings.HasPrefix(line, "#") {
 			continue
 		}
 
 		if strings.HasPrefix(line, "!") {
-			go send(host, chunk)
+			go send(conn, chunk)
 			chunk = make([]byte, 0, 65536)
 		} else {
 			chunk = append(chunk, []byte(line)...)
@@ -59,6 +69,11 @@ func main() {
 }
 
 // Send sends single data to host.
-func send(host string, data []byte) {
-	fmt.Printf("sender: data chunk of size %d KB\n", len(data)/1024)
+func send(conn net.Conn, data []byte) {
+	n, err := conn.Write(data)
+	if err != nil {
+		log.Fatalln("sender: failed to write to conn")
+	}
+
+	fmt.Printf("sender: data chunk of size %d KB\n", n/1024)
 }
