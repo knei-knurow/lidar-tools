@@ -26,14 +26,13 @@ func main() {
 
 	for {
 		buf := make([]byte, 65536)
-		n, addr, err := pckt.ReadFrom(buf)
+		n, _, err := pckt.ReadFrom(buf)
 		if err != nil {
 			log.Fatalf("receiver: error reading from buffer: %v\n", err)
 		}
 
 		text := string(buf[0:n])
 		text = strings.TrimSpace(text)
-
-		fmt.Printf("receiver: %d bytes received from %s --> %s\n", n, addr, text)
+		fmt.Printf("receiver: received %d KB of data\n", n/1024)
 	}
 }

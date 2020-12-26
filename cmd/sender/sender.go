@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -22,7 +23,7 @@ var (
 func init() {
 	flag.StringVar(&filePath, "file-path", "", ".txt file containing valid cloud series")
 	flag.StringVar(&dest, "dest", "192.168.1.1", "address to send packets to")
-	flag.StringVar(&port, "port", ":8080", "port on destAddress to route packets to")
+	flag.StringVar(&port, "port", "8080", "port on destAddress to route packets to")
 }
 
 func main() {
@@ -34,11 +35,10 @@ func main() {
 		log.Fatalln("sender: failed to open input file")
 	}
 
-	conn, err := net.Dial("udp", dest+port)
+	conn, err := net.Dial("udp", dest+":"+port)
 	if err != nil {
-		log.Fatalln("sender: failed to dial")
+		log.Fatalln("sender: failed to dial:", err)
 	}
-	conn.SetDeadline(time.Now().Add(time.Second)) // too long anyway
 	defer conn.Close()
 
 	reader := bufio.NewReader(f)
@@ -60,6 +60,11 @@ func main() {
 		}
 
 		if strings.HasPrefix(line, "!") {
+			commentLine := strings.Split(line, " ")
+			timeInt, _ := strconv.Atoi(commentLine[1])
+			timeout := time.Duration(timeInt) * time.Millisecond
+			time.Sleep(timeout)
+
 			go send(conn, chunk)
 			chunk = make([]byte, 0, 65536)
 		} else {
@@ -72,8 +77,8 @@ func main() {
 func send(conn net.Conn, data []byte) {
 	n, err := conn.Write(data)
 	if err != nil {
-		log.Fatalln("sender: failed to write to conn")
+		log.Fatalln("sender: failed to write to conn:", err)
 	}
 
-	fmt.Printf("sender: data chunk of size %d KB\n", n/1024)
+	fmt.Printf("sender: sent chunk of size %d KB\n", n/1024)
 }
