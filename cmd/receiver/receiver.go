@@ -29,10 +29,13 @@ func main() {
 		n, _, err := pckt.ReadFrom(buf)
 		if err != nil {
 			log.Fatalf("receiver: error reading from buffer: %v\n", err)
+			break
 		}
 
 		text := string(buf[0:n])
 		text = strings.TrimSpace(text)
 		fmt.Printf("receiver: received %d KB of data\n", n/1024)
 	}
+
+	fmt.Println("receiver: done")
 }

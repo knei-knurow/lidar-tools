@@ -32,12 +32,12 @@ func main() {
 
 	f, err := os.Open(filePath)
 	if err != nil {
-		log.Fatalln("sender: failed to open input file")
+		log.Fatalln("transmitter: failed to open input file")
 	}
 
 	conn, err := net.Dial("udp", dest+":"+port)
 	if err != nil {
-		log.Fatalln("sender: failed to dial:", err)
+		log.Fatalln("transmitter: failed to dial:", err)
 	}
 	defer conn.Close()
 
@@ -49,10 +49,10 @@ func main() {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				fmt.Println("sender: end of file")
+				fmt.Println("transmitter: end of file")
 				break
 			}
-			log.Fatalln("sender:", err)
+			log.Fatalln("transmitter:", err)
 		}
 
 		if strings.HasPrefix(line, "#") {
@@ -77,8 +77,8 @@ func main() {
 func send(conn net.Conn, data []byte) {
 	n, err := conn.Write(data)
 	if err != nil {
-		log.Fatalln("sender: failed to write to conn:", err)
+		log.Fatalln("transmitter: failed to write to conn:", err)
 	}
 
-	fmt.Printf("sender: sent chunk of size %d KB\n", n/1024)
+	fmt.Printf("transmitter: sent chunk of size %d KB\n", n/1024)
 }
