@@ -54,6 +54,7 @@ func main() {
 		}
 
 		if strings.HasPrefix(line, "!") {
+			line = line + "\n"
 			chunk = append(chunk, []byte(line)...)
 			commentLine := strings.Split(line, " ")
 			timeInt, _ := strconv.Atoi(commentLine[1])
