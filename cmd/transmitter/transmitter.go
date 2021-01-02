@@ -59,8 +59,8 @@ func main() {
 			timeout := time.Duration(timeInt) * time.Millisecond
 			time.Sleep(timeout)
 
-			go send(conn, chunk)
 			chunk = make([]byte, 0, 65536)
+			go send(conn, chunk)
 		} else {
 			chunk = append(chunk, []byte(line)...)
 		}

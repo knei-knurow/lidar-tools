@@ -37,7 +37,8 @@ func main() {
 
 		text := string(buf[0:n])
 		text = strings.TrimSpace(text)
-		fmt.Fprintf(os.Stderr, "receiver: received %d KB of data\n", n/1024)
+		// fmt.Fprintf(os.Stderr, "receiver: received %d KB of data\n", n/1024)
+		fmt.Printf(text)
 	}
 
 	fmt.Fprintln(os.Stderr, "receiver: done")
