@@ -54,13 +54,14 @@ func main() {
 		}
 
 		if strings.HasPrefix(line, "!") {
+			chunk = append(chunk, []byte(line)...)
 			commentLine := strings.Split(line, " ")
 			timeInt, _ := strconv.Atoi(commentLine[1])
 			timeout := time.Duration(timeInt) * time.Millisecond
 			time.Sleep(timeout)
 
-			chunk = make([]byte, 0, 65536)
 			go send(conn, chunk)
+			chunk = make([]byte, 0, 65536)
 		} else {
 			chunk = append(chunk, []byte(line)...)
 		}
