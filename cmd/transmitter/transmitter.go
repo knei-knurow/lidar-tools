@@ -21,7 +21,6 @@ var (
 )
 
 func init() {
-	flag.StringVar(&filePath, "file-path", "", ".txt file containing valid cloud series")
 	flag.StringVar(&dest, "dest", "192.168.1.1", "address to send packets to")
 	flag.StringVar(&port, "port", "8080", "port on destAddress to route packets to")
 }
@@ -30,18 +29,13 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	f, err := os.Open(filePath)
-	if err != nil {
-		log.Fatalln("transmitter: failed to open input file")
-	}
-
 	conn, err := net.Dial("udp", dest+":"+port)
 	if err != nil {
 		log.Fatalln("transmitter: failed to dial:", err)
 	}
 	defer conn.Close()
 
-	reader := bufio.NewReader(f)
+	reader := bufio.NewReader(os.Stdin)
 
 	// chunk represents a single cloud scanned from lidar
 	chunk := make([]byte, 0, 65536)
