@@ -1,7 +1,7 @@
 all: transmitter receiver
 
 transmitter: cmd/transmitter/transmitter.go
-	go build -o lidar-tx cmd/transmitter/transmitter.go
+	go build -o lidar-tx cmd/transmitter/transmitter.go cmd/transmitter/cloud.go
 
 receiver: cmd/receiver/receiver.go
 	go build -o lidar-rx cmd/receiver/receiver.go
