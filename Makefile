@@ -1,10 +1,13 @@
 all: transmitter receiver
 
-transmitter: cmd/transmitter/transmitter.go
-	go build -o lidar-tx cmd/transmitter/transmitter.go cmd/transmitter/cloud.go
+TRANSMITTER := ./cmd/transmitter
+RECEIVER := ./cmd/receiver
 
-receiver: cmd/receiver/receiver.go
-	go build -o lidar-rx cmd/receiver/receiver.go
+transmitter: $(TRANSMITTER)/transmitter.go
+	go build $(TRANSMITTER)/transmitter.go $(TRANSMITTER)/cloud.go
+
+receiver: $(RECEIVER)/receiver.go
+	go build $(RECEIVER)/receiver.go
 
 install:
 	cp ./lidar-tx /usr/local/bin
