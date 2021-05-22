@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/bartekpacia/lidar-tools/frame"
 	"github.com/jacobsa/go-serial/serial"
 )
 
@@ -17,6 +18,7 @@ var (
 )
 
 func init() {
+	log.SetFlags(0)
 	flag.StringVar(&portName, "port", "/dev/tty.*", "port to listen on")
 	flag.UintVar(&baudRate, "baud", 9600, "baud rate in bits per second")
 	flag.UintVar(&dataBits, "dbits", 8, "the number of data bits in a single frame")
@@ -38,7 +40,7 @@ func main() {
 
 	port, err := serial.Open(options)
 	if err != nil {
-		log.Fatalln("error opening serial port:", err)
+		log.Fatalf("failed to open serial port %s: %v\n", portName, err)
 	}
 	defer port.Close()
 
@@ -63,12 +65,12 @@ func main() {
 		}
 
 		inputByte := uint16(value)
-		frame := createFrame(inputByte)
+		f := frame.CreateFrame(inputByte)
 
-		fmt.Printf("frame: %s\n", frame)
-		for i, currentByte := range frame {
+		fmt.Printf("frame: %s\n", f)
+		for i, currentByte := range f {
 			fmt.Println("---")
-			fmt.Printf("%d %s will be sent\n", i, describeByte(currentByte))
+			fmt.Printf("%d %s will be sent\n", i, frame.DescribeByte(currentByte))
 			_, err := port.Write([]byte{currentByte})
 			if err != nil {
 				log.Fatalf("%d byte: failed to write it to serial port: %v\n", i, err)
@@ -88,10 +90,4 @@ func main() {
 	}
 
 	fmt.Println("finished :)")
-}
-
-/// DescribeByte prints everything that a single byte can represent.
-/// Ir prints binary value, decimal value and ASCII character.
-func describeByte(b byte) string {
-	return fmt.Sprintf("byte (bin: %b, dec: %d, ASCII: %q)", b, b, b)
 }

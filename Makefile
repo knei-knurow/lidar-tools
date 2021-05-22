@@ -8,7 +8,7 @@ receiver: $(RECEIVER)/receiver.go
 	go build -o lidar-rx $(RECEIVER)/receiver.go
 
 servo: $(SERVO)/servo.go
-	go build -o lidar-servo $(SERVO)/servo.go $(SERVO)/frame.go
+	go build -o lidar-servo $(SERVO)/servo.go
 
 transmitter: $(TRANSMITTER)/transmitter.go
 	go build -o lidar-tx $(TRANSMITTER)/transmitter.go $(TRANSMITTER)/cloud.go

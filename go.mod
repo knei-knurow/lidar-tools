@@ -1,4 +1,4 @@
-module github.com/bartekpacia/lidar-stream
+module github.com/bartekpacia/lidar-tools
 
 go 1.15
 
