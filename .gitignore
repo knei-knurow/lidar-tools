@@ -1,8 +1,12 @@
-.DS_Store
+# IDE files we don't want
 .vscode/
 .idea/
+
+# Executable files
 /lidar-tx
-/receiver
-/transmitter
+/lidar-servo
 /lidar-rx
+
+# other
 /datasets
+.DS_Store
