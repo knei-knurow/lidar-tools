@@ -37,7 +37,7 @@ func main() {
 
 	// chunk represents a single cloud scanned from lidar
 	chunk := make([]byte, 0, 65536)
-	for true {
+	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if errors.Is(err, io.EOF) {
