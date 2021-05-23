@@ -7,20 +7,30 @@ import (
 	"strings"
 )
 
-// CreateFrame creates a standard frame transporting data
-// and returns it.
-func CreateFrame(data uint16) (frame []byte) {
+// CreateRawFrame creates a frame transporting data.
+// It does not have CRC checksum.
+func CreateRawFrame(data uint16) (frame []byte) {
 	var builder strings.Builder
-	builder.Grow(7)
+	builder.Grow(6)
 
 	builder.WriteString("LD+")
-	builder.WriteByte(byte(data >> 8))
-	builder.WriteByte(byte(data))
+	builder.WriteByte(byte(data >> 8)) // Write most significant 8 bits
+	builder.WriteByte(byte(data))      // Write least significant 8 bits
 	builder.WriteString("#")
 
-	encoded := builder.String()
-	crc := CalculateCRC([]byte(encoded))
+	frame = []byte(builder.String())
+	return
+}
 
+// CreateFrame creates a standard frame transporting data.
+func CreateFrame(data uint16) (frame []byte) {
+	var builder strings.Builder
+	builder.Grow(2)
+
+	rawFrame := CreateRawFrame(data)
+	builder.WriteString(string(rawFrame))
+
+	crc := CalculateCRC([]byte(rawFrame))
 	builder.WriteByte(crc)
 
 	frame = []byte(builder.String())
@@ -32,6 +42,7 @@ func CalculateCRC(data []byte) (crc byte) {
 	crc = data[0]
 	for i := 1; i < len(data); i++ {
 		crc ^= data[i]
+		// fmt.Printf("crc %d: % x\n", i, crc)
 	}
 	return
 }
