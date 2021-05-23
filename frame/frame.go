@@ -7,10 +7,23 @@ import (
 	"strings"
 )
 
+type FrameHeader string
+
 const (
-	FrameLidar  = "LD"
-	FrameMotors = "MT"
+	FrameLidar  FrameHeader = "LD"
+	FrameMotors FrameHeader = "MT"
 )
+
+// Frame is a standard frame used in the rover project.
+type Frame struct {
+	Header   FrameHeader
+	Data     []byte
+	Checksum byte
+}
+
+func (f Frame) String() string {
+	return fmt.Sprintf("%s+%x#%x", f.Header, f.Data, f.Checksum)
+}
 
 // EncodeRawFrame creates a frame transporting data.
 // It does not have CRC checksum.
@@ -45,15 +58,20 @@ func EncodeFrame(data uint16) (frame []byte) {
 // CalculateCRC calculates the CRC checksum of data.
 func CalculateCRC(data []byte) (crc byte) {
 	crc = data[0]
+	fmt.Println("--------------")
+	fmt.Printf("0 data = crc: %08b\n", crc)
 	for i := 1; i < len(data); i++ {
+		fmt.Println("--------------")
+		fmt.Printf("%d before crc: %08b %+q\n", i, crc, crc)
+		fmt.Printf("%d       data: %08b %+q\n", i, data[i], data[i])
 		crc ^= data[i]
-		// fmt.Printf("crc %d: % x\n", i, crc)
+		fmt.Printf("%d  after crc: %08b %+q\n", i, crc, crc)
 	}
 	return
 }
 
-/// DescribeByte prints everything that a single byte can represent.
-/// Ir prints binary value, decimal value and ASCII character.
+// DescribeByte prints everything most common representations of a byte.
+// It prints b's binary value, decimal, hexadecimal value and ASCII.
 func DescribeByte(b byte) string {
-	return fmt.Sprintf("byte (bin: %b, dec: %d, ASCII: %q)", b, b, b)
+	return fmt.Sprintf("byte (bin: %08b, dec: %3d, hex: %02x, ASCII: %+q)", b, b, b, b)
 }
