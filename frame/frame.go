@@ -58,14 +58,8 @@ func EncodeFrame(data uint16) (frame []byte) {
 // CalculateCRC calculates the CRC checksum of data.
 func CalculateCRC(data []byte) (crc byte) {
 	crc = data[0]
-	fmt.Println("--------------")
-	fmt.Printf("0 data = crc: %08b\n", crc)
 	for i := 1; i < len(data); i++ {
-		fmt.Println("--------------")
-		fmt.Printf("%d before crc: %08b %+q\n", i, crc, crc)
-		fmt.Printf("%d       data: %08b %+q\n", i, data[i], data[i])
 		crc ^= data[i]
-		fmt.Printf("%d  after crc: %08b %+q\n", i, crc, crc)
 	}
 	return
 }
@@ -73,5 +67,5 @@ func CalculateCRC(data []byte) (crc byte) {
 // DescribeByte prints everything most common representations of a byte.
 // It prints b's binary value, decimal, hexadecimal value and ASCII.
 func DescribeByte(b byte) string {
-	return fmt.Sprintf("byte (bin: %08b, dec: %3d, hex: %02x, ASCII: %+q)", b, b, b, b)
+	return fmt.Sprintf("byte(bin: %08b, dec: %3d, hex: %02x, ASCII: %+q)", b, b, b, b)
 }
