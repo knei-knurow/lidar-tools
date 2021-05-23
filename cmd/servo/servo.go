@@ -65,7 +65,7 @@ func main() {
 		}
 
 		inputByte := uint16(value)
-		f := frame.CreateFrame(inputByte)
+		f := frame.EncodeFrame(inputByte)
 
 		fmt.Printf("frame: %s\n", f)
 		for i, currentByte := range f {

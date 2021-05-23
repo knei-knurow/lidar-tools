@@ -7,9 +7,14 @@ import (
 	"strings"
 )
 
-// CreateRawFrame creates a frame transporting data.
+const (
+	FrameLidar  = "LD"
+	FrameMotors = "MT"
+)
+
+// EncodeRawFrame creates a frame transporting data.
 // It does not have CRC checksum.
-func CreateRawFrame(data uint16) (frame []byte) {
+func EncodeRawFrame(data uint16) (frame []byte) {
 	var builder strings.Builder
 	builder.Grow(6)
 
@@ -22,12 +27,12 @@ func CreateRawFrame(data uint16) (frame []byte) {
 	return
 }
 
-// CreateFrame creates a standard frame transporting data.
-func CreateFrame(data uint16) (frame []byte) {
+// EncodeFrame creates a standard frame transporting data.
+func EncodeFrame(data uint16) (frame []byte) {
 	var builder strings.Builder
 	builder.Grow(2)
 
-	rawFrame := CreateRawFrame(data)
+	rawFrame := EncodeRawFrame(data)
 	builder.WriteString(string(rawFrame))
 
 	crc := CalculateCRC([]byte(rawFrame))

@@ -41,7 +41,7 @@ func TestCreateFrame(t *testing.T) {
 	t.Run("valid frame 1", func(t *testing.T) {
 		want := []byte("LD+\x00\x00#")
 
-		got := CreateRawFrame(0)
+		got := EncodeRawFrame(0)
 
 		if !bytes.Equal(got, want) {
 			t.Errorf("got %b, want %b", got, want)
@@ -52,7 +52,7 @@ func TestCreateFrame(t *testing.T) {
 	t.Run("valid frame 2", func(t *testing.T) {
 		want := []byte("LD+\x00\x05#")
 
-		got := CreateRawFrame(5)
+		got := EncodeRawFrame(5)
 
 		if !bytes.Equal(got, want) {
 			t.Errorf("got %b, want %b", got, want)
