@@ -12,21 +12,20 @@ func main() {
 	// Demonstration of frame.DescribeByte function.
 	// It's very useful to quickly examine what a particular byte means.
 	// See its implementation to learn few cool tricks about formatting verbs.
-	/*
-		for i := 0; i < 256; i++ {
-			fmt.Println(frame.DescribeByte(byte(i)))
-		}
-	*/
+
+	fmt.Printf("\n- - -\n\n")
+	for i := 0; i < 8; i++ {
+		fmt.Println(frame.DescribeByte(byte(i)))
+	}
+
+	fmt.Printf("\n- - -\n\n")
 
 	// f1 and f2 are the same
 	f1 := frame.Frame{Header: frame.FrameLidar, Data: []byte{48, 48}, Checksum: 0}
 	f2 := frame.Frame{Header: frame.FrameLidar, Data: []byte("00"), Checksum: 0}
-	fmt.Println(f1, f2)
+	fmt.Println("f1:", f1, "f2:", f2)
 
-	// rf0 := frame.EncodeRawFrame(0)
-	// f0 := frame.EncodeFrame(0)
-	// crc0 := frame.CalculateCRC(rf0)
-	// printFrame(rf0, f0, crc0, 0)
+	fmt.Printf("\n- - -\n\n")
 
 	var i uint16
 	for i = 0; i < 5; i++ {
