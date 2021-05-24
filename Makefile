@@ -5,13 +5,13 @@ SERVO := ./cmd/servo
 TRANSMITTER := ./cmd/transmitter
 
 receiver: $(RECEIVER)/receiver.go
-	go build -o lidar-rx $(RECEIVER)/receiver.go
+	go build $(RECEIVER)/receiver.go
 
 servo: $(SERVO)/servo.go
-	go build -o lidar-servo $(SERVO)/servo.go
+	go build $(SERVO)/servo.go
 
 transmitter: $(TRANSMITTER)/transmitter.go
-	go build -o lidar-tx $(TRANSMITTER)/transmitter.go $(TRANSMITTER)/cloud.go
+	go build  $(TRANSMITTER)/transmitter.go $(TRANSMITTER)/cloud.go
 
 install:
 	cp ./lidar-rx /usr/local/bin

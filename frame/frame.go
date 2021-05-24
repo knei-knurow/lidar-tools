@@ -7,11 +7,12 @@ import (
 	"strings"
 )
 
+// FrameHeader represents the type of a frame. It takes the form of 2 uppercase ASCII characters.
 type FrameHeader string
 
 const (
-	FrameLidar  FrameHeader = "LD"
-	FrameMotors FrameHeader = "MT"
+	FrameLidar  FrameHeader = "LD" // Frame format used for lidar-related stuff.
+	FrameMotors FrameHeader = "MT" // Frame format used for motors-related stuff.
 )
 
 // Frame is a standard frame used in the rover project.

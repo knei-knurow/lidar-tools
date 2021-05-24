@@ -6,6 +6,17 @@
 /lidar-tx
 /lidar-servo
 /lidar-rx
+<<<<<<< HEAD
+*.exe
+=======
+/receiver
+/servo
+/transmitter
+/receiver.exe
+/servo.exe
+/transmitter.exe
+
+>>>>>>> c4208fa (modify (and fix) sending logic)
 
 # other
 /datasets
