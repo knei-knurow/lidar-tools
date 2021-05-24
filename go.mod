@@ -1,4 +1,4 @@
-module github.com/bartekpacia/lidar-tools
+module github.com/knei-knurow/lidar-tools
 
 go 1.15
 

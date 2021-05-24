@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/jacobsa/go-serial/serial"
-	"github.com/bartekpacia/lidar-tools/frame" // TODO: Fix
+	"github.com/knei-knurow/lidar-tools/frame"
 )
 
 var (

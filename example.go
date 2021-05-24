@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/bartekpacia/lidar-tools/frame"
+	"github.com/knei-knurow/lidar-tools/frame"
 )
 
 func main() {
