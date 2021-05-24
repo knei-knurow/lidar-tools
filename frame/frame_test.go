@@ -48,7 +48,6 @@ func TestCalculateCRC(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestCreateFrame(t *testing.T) {

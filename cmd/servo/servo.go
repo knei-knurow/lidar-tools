@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/bartekpacia/lidar-tools/frame"
 	"github.com/jacobsa/go-serial/serial"
+	"github.com/bartekpacia/lidar-tools/frame" // TODO: Fix
 )
 
 var (
