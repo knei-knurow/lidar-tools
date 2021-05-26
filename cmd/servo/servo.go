@@ -88,15 +88,23 @@ func main() {
 	}
 
 	if waitForResponse {
-		fmt.Printf("servo: waiting for single byte...\n")
-		output := make([]byte, 1)
+		fmt.Printf("servo: waiting for 2 bytes...\n")
+		output := make([]byte, 2)
 		n, err := port.Read(output)
 		if err != nil {
 			log.Fatalln("servo: failed to read from serial port:", err)
 		}
-		outputByte := output[0]
+		fmt.Printf("servo: read %d bytes from serial port\n", n)
 
-		fmt.Printf("servo: read %d bytes (\"%d\") from serial port \n", n, outputByte)
+		var fullValue uint16
+		fullValue = uint16(output[0]) << 8
+		fullValue += uint16(output[1])
+
+		for i, b := range output {
+			fmt.Printf("servo: %d %s\n", i, frame.DescribeByte(b))
+		}
+
+		fmt.Printf("servo: full value (uint16): %d\n", fullValue)
 	}
 
 	fmt.Println("servo: finish")
