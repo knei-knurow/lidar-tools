@@ -46,6 +46,7 @@ func processAccelFrame(frm *frame.Frame) (AccelData, error) {
 	data.yGyro = mergeBytes(frm.Data[8], frm.Data[9])
 	data.zGyro = mergeBytes(frm.Data[10], frm.Data[11])
 
+	calibrate(&data, &accelCalib)
 	return data, nil
 }
 
