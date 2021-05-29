@@ -11,11 +11,8 @@ import (
 )
 
 var (
-	portName   string
-	baudRate   uint
-	dataBits   uint
-	stopBits   uint
-	parityMode int
+	portName string
+	baudRate uint
 )
 
 var (
@@ -27,15 +24,14 @@ var (
 
 func init() {
 	log.SetFlags(0)
-	flag.StringVar(&portName, "port", "/dev/tty.*", "port to listen on")
-	flag.UintVar(&baudRate, "baud", 9600, "baud rate in bits per second")
-	flag.UintVar(&dataBits, "dbits", 8, "the number of data bits in a single frame")
-	flag.UintVar(&stopBits, "sbits", 1, "the number of stop bits in a single frame")
-	flag.IntVar(&parityMode, "pmode", 1, "parity mode, none = 0, odd = 1, even = 2")
+	log.SetPrefix("servoctl: ")
+
+	flag.StringVar(&portName, "port", "/dev/ttyUSB0", "serial communication port")
+	flag.UintVar(&baudRate, "baud", 9600, "port baud rate (bps)")
 	flag.IntVar(&value, "value", -1, "value to encode into a frame and send")
-	flag.UintVar(&minValue, "min-value", 1600, "minimum value that is valid (uint16")
-	flag.UintVar(&maxValue, "max-value", 4400, "maximum value that is valid (uint16")
-	flag.BoolVar(&waitForResponse, "wait", false, "whether to wait for the MCU to respond with a single byte")
+	flag.UintVar(&minValue, "min-value", 1600, "minimum value that is valid (uint16)")
+	flag.UintVar(&maxValue, "max-value", 4400, "maximum value that is valid (uint16)")
+	flag.BoolVar(&waitForResponse, "wait", false, "wait for MCU to respond with a single byte")
 }
 
 func main() {
@@ -44,69 +40,69 @@ func main() {
 	options := serial.OpenOptions{
 		PortName:        portName,
 		BaudRate:        baudRate,
-		DataBits:        dataBits,
-		StopBits:        stopBits,
+		DataBits:        8,
+		StopBits:        1,
 		MinimumReadSize: 1,
-		ParityMode:      serial.ParityMode(parityMode),
+		ParityMode:      0, // no parity
 	}
 
 	port, err := serial.Open(options)
 	if err != nil {
-		log.Fatalf("servo: failed to open serial port %s: %v\n", portName, err)
+		log.Fatalf("failed to open port %s: %v\n", portName, err)
 	}
 	defer port.Close()
 
 	if value == -1 {
-		fmt.Println("servo: finish: -1 entered")
+		fmt.Println("finish: -1 entered")
 		os.Exit(0)
 	}
 
 	if value < int(minValue) {
-		log.Fatalf("servo: error: %d is smaller than %d\n", value, minValue)
+		log.Fatalf("error: %d is smaller than %d\n", value, minValue)
 	}
 
 	if value > int(maxValue) {
-		log.Fatalf("servo: error: %d is bigger than max value %d\n", value, maxValue)
+		log.Fatalf("error: %d is bigger than max value %d\n", value, maxValue)
 	}
 
 	if value > 65535 {
-		log.Fatalf("servo: error: %d overflows uint16\n", value)
+		log.Fatalf("error: %d overflows uint16\n", value)
 	}
 
 	inputByte := uint16(value)
 	f := frame.EncodeFrame(inputByte)
 
-	fmt.Printf("servo: frame: %s\n", f)
+	fmt.Printf("frame: %s\n", f)
 	for i, currentByte := range f {
 		fmt.Println("---")
-		fmt.Printf("servo: %d %s will be sent\n", i, frame.DescribeByte(currentByte))
+		fmt.Printf("%d %s will be sent\n", i, frame.DescribeByte(currentByte))
 		_, err := port.Write([]byte{currentByte})
 		if err != nil {
-			log.Fatalf("servo: %d byte: failed to write it to serial port: %v\n", i, err)
+			log.Fatalf("%d byte: failed to write it to port: %v\n", i, err)
 		}
-		fmt.Printf("servo: %d byte: wrote it to serial port\n", i)
+		fmt.Printf("%d byte: wrote it to port\n", i)
 	}
 
 	// FIXME: doesn't work – output always contains only zeros
 	if waitForResponse {
-		fmt.Printf("servo: waiting for 2 bytes...\n")
+		fmt.Printf("waiting for 2 bytes...\n")
 		output := make([]byte, 2)
 		n, err := port.Read(output)
 		if err != nil {
-			log.Fatalln("servo: failed to read from serial port:", err)
+			log.Fatalln("failed to read from port:", err)
 		}
-		fmt.Printf("servo: read %d bytes from serial port\n", n)
+		fmt.Printf("read %d bytes from port\n", n)
 
 		var fullValue uint16
 		fullValue = uint16(output[0]) << 8
 		fullValue += uint16(output[1])
 
 		for i, b := range output {
-			fmt.Printf("servo: %d %s\n", i, frame.DescribeByte(b))
+			fmt.Printf("%d %s\n", i, frame.DescribeByte(b))
 		}
 
-		fmt.Printf("servo: full value (uint16): %d\n", fullValue)
+		fmt.Printf("full value (uint16): %d\n", fullValue)
 	}
 
-	fmt.Println("servo: finish")
+	fmt.Println("finish")
 }
