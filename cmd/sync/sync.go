@@ -13,47 +13,47 @@ import (
 )
 
 var (
-	port     string
-	baudrate uint
+	portName string
+	baudRate uint
 	accelOut bool
 	servoOut bool
 	lidarOut bool
 )
 
 func init() {
-	flag.StringVar(&port, "port", "COM9", "Communication port")
-	flag.UintVar(&baudrate, "baudrate", 9600, "Communication port baudrate")
-	flag.BoolVar(&accelOut, "accel", true, "Print accelerometer data on stdout")
-	flag.BoolVar(&servoOut, "servo", true, "Print set servo position on stdout")
-	flag.BoolVar(&lidarOut, "lidar", true, "Print lidar data on stdout")
-}
+	log.SetFlags(0)
+	log.SetPrefix("sync: ")
 
-func receiver() {
-
+	flag.StringVar(&portName, "port", "/dev/ttyUSB0", "serial communication port")
+	flag.UintVar(&baudRate, "baud", 9600, "port baud rate (bps)")
+	flag.BoolVar(&accelOut, "accel", true, "print accelerometer data on stdout")
+	flag.BoolVar(&servoOut, "servo", true, "print set servo position on stdout")
+	flag.BoolVar(&lidarOut, "lidar", true, "print lidar data on stdout")
 }
 
 func main() {
 	flag.Parse()
 
-	log.SetPrefix("lidar-sync: ")
-	log.Println("Starting...")
+	log.Println("starting...")
 
 	writer := bufio.NewWriter(os.Stdout)
 
-	// Port
-	serOpt := serial.OpenOptions{
-		PortName:        port,
-		BaudRate:        baudrate,
+	options := serial.OpenOptions{
+		PortName:        portName,
+		BaudRate:        baudRate,
 		DataBits:        8,
+		StopBits:        1,
 		MinimumReadSize: 1,
+		ParityMode:      0, // no parity
 	}
-	ser, err := serial.Open(serOpt)
-	defer ser.Close()
+
+	port, err := serial.Open(options)
 	if err != nil {
-		log.Println("Unable to open the specified port.")
-		return
+		log.Fatalf("failed to open port %s: %v\n", portName, err)
 	}
-	log.Println("Connection established.")
+	defer port.Close()
+
+	log.Println("connection established")
 
 	accel := AccelData{}
 	servo := Servo{positon: 3600, positonMin: 1600, positonMax: 4400, vector: 60}
@@ -64,18 +64,18 @@ func main() {
 		servo.move()
 		inputByte := uint16(servo.positon)
 		f := frame.EncodeFrame(inputByte)
-		for _, currentByte := range f {
-			if _, err := ser.Write([]byte{currentByte}); err != nil {
-				log.Println("Unable to send servo data:", err)
+		for i, currentByte := range f {
+			if _, err := port.Write([]byte{currentByte}); err != nil {
+				log.Fatalf("%d byte: failed to write it to port: %v\n", i, err)
 			}
 		}
 		servo.timept = time.Now()
 
 		// Accelerometer: Reading data
 		buf := make([]byte, 32)
-		_, err = ser.Read(buf)
+		_, err = port.Read(buf)
 		if err != nil {
-			log.Println("An error occured while reading a buffer:", err)
+			log.Println("failed to read from port:", err)
 			continue
 		}
 
