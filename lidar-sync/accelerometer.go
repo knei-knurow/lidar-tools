@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"time"
 
 	"github.com/knei-knurow/lidar-tools/frame"
 )
@@ -13,10 +14,18 @@ type AccelData struct {
 	xGyro  int
 	yGyro  int
 	zGyro  int
+	timept time.Time
 }
 
 var (
-	accelCalib = AccelData{-844, 78, 1542, 244, -228, 161}
+	accelCalib = AccelData{
+		xAccel: -844,
+		yAccel: 78,
+		zAccel: 1542,
+		xGyro:  244,
+		yGyro:  -228,
+		zGyro:  161,
+	}
 )
 
 func calibrate(data *AccelData, calib *AccelData) {
@@ -29,7 +38,9 @@ func calibrate(data *AccelData, calib *AccelData) {
 }
 
 func processAccelFrame(frm *frame.Frame) (AccelData, error) {
+	timept := time.Now()
 	var data AccelData
+
 	if frm.Header[0] != 'L' || frm.Header[1] != 'D' || frm.Header[2] != '-' {
 		return data, errors.New("Bad frame header.")
 	}
@@ -45,6 +56,7 @@ func processAccelFrame(frm *frame.Frame) (AccelData, error) {
 	data.xGyro = mergeBytes(frm.Data[6], frm.Data[7])
 	data.yGyro = mergeBytes(frm.Data[8], frm.Data[9])
 	data.zGyro = mergeBytes(frm.Data[10], frm.Data[11])
+	data.timept = timept
 
 	calibrate(&data, &accelCalib)
 	return data, nil
