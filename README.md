@@ -1,21 +1,30 @@
 # lidar-tools
 
-This project contains currently 3 programs:
+Programs in this repository:
 
-- **lidar-tx**
+- **receiver**
 
   Enables transmitting data from [lidar-scan](https://github.com/knei-knurow/lidar-scan)
   over the network using UDP.
 
-  `$ lidar-scan --port /dev/ttyUSB0 | lidar-tx --address 192.168.1.1 --port 8080`
+  `$ ./receiver --port /dev/ttyUSB0 | lidar-tx --address 192.168.1.1 --port 8080`
 
-- **lidar-rx**
+- **transmitter**
 
   Enables receiving data from [lidar-scan](https://github.com/knei-knurow/lidar-scan)
   over the network using UDP.
 
-  `$ lidar-rx --port 8080 | lidar-vis -s`
+  `$ ./transmitter --port 8080 | lidar-vis -s`
 
-- **lidar-servo**
+- **servoctl**
+  Controls servo rotating the axis on which lidar is mounted.
 
-  `$ lidar-servo --port /dev/tty.usbserial-14220`
+  `$ ./servoctl --port /dev/tty.usbserial-14220`
+
+- **sync**
+  Synchronizes scan data from lidar with acceleration and gyroscope data from
+  MPU6050 accelerometer.
+
+  `$ ./sync --port /dev/tty.usbserial-14220`
+
+  TODO: add more description to `sync`

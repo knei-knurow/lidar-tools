@@ -87,6 +87,7 @@ func main() {
 		fmt.Printf("servo: %d byte: wrote it to serial port\n", i)
 	}
 
+	// FIXME: doesn't work – output always contains only zeros
 	if waitForResponse {
 		fmt.Printf("servo: waiting for 2 bytes...\n")
 		output := make([]byte, 2)
