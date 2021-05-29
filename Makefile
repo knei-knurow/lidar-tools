@@ -1,22 +1,27 @@
-all: receiver servo transmitter
+all: receiver servoctl sync transmitter
 
 RECEIVER := ./cmd/receiver
-SERVO := ./cmd/servo
+SERVOCTL:= ./cmd/servoctl
+SYNC := ./cmd/sync
 TRANSMITTER := ./cmd/transmitter
 
 receiver: $(RECEIVER)/receiver.go
 	go build $(RECEIVER)/receiver.go
 
-servo: $(SERVO)/servo.go
-	go build $(SERVO)/servo.go
+servoctl: $(SERVOCTL)/servoctl.go
+	go build $(SERVOCTL)/servoctl.go
+
+sync: $(SYNC)/sync.go
+	go build $(SYNC)/sync.go $(SYNC)/servo.go $(SYNC)/accelerometer.go
 
 transmitter: $(TRANSMITTER)/transmitter.go
-	go build  $(TRANSMITTER)/transmitter.go $(TRANSMITTER)/cloud.go
+	go build $(TRANSMITTER)/transmitter.go $(TRANSMITTER)/cloud.go
 
 install:
-	cp ./lidar-rx /usr/local/bin
-	cp ./lidar-servo /usr/local/bin
-	cp ./lidar-tx /usr/local/bin
+	cp ./receiver /usr/local/bin
+	cp ./servoctl /usr/local/bin
+	cp ./sync /usr/local/bin
+	cp ./transmitter /usr/local/bin
 
 clean:
-	rm -f lidar-rx lidar-servo lidar-tx
+	rm -f receiver servoctl sync transmitter

@@ -20,13 +20,12 @@ var (
 	lidarOut bool
 )
 
-func flags() {
+func init() {
 	flag.StringVar(&port, "port", "COM9", "Communication port")
 	flag.UintVar(&baudrate, "baudrate", 9600, "Communication port baudrate")
 	flag.BoolVar(&accelOut, "accel", true, "Print accelerometer data on stdout")
 	flag.BoolVar(&servoOut, "servo", true, "Print set servo position on stdout")
 	flag.BoolVar(&lidarOut, "lidar", true, "Print lidar data on stdout")
-	flag.Parse()
 }
 
 func receiver() {
@@ -34,7 +33,7 @@ func receiver() {
 }
 
 func main() {
-	flags()
+	flag.Parse()
 
 	log.SetPrefix("lidar-sync: ")
 	log.Println("Starting...")
