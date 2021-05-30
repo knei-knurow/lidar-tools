@@ -1,6 +1,6 @@
-// Package frame provides standard functions to deal with
+// Package frames provides standard functions to deal with
 // frames used in lidar-related tools.
-package frame
+package frames
 
 import (
 	"fmt"

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/jacobsa/go-serial/serial"
-	"github.com/knei-knurow/lidar-tools/frame"
+	"github.com/knei-knurow/lidar-tools/frames"
 )
 
 var (
@@ -63,7 +63,7 @@ func main() {
 		// Servo: Sending data
 		servo.move()
 		inputByte := uint16(servo.positon)
-		f := frame.EncodeFrame(inputByte)
+		f := frames.EncodeFrame(inputByte)
 		for i, currentByte := range f {
 			if _, err := port.Write([]byte{currentByte}); err != nil {
 				log.Fatalf("%d byte: failed to write it to port: %v\n", i, err)
@@ -80,15 +80,16 @@ func main() {
 		}
 
 		// TODO: Clever Buffer -> Frame conversion
-		frm := frame.Frame{
-			Header:   frame.FrameHeader(buf[0:3]),
+		frame := frames.Frame{
+			Header:   frames.FrameHeader(buf[0:3]),
 			Data:     buf[3:15],
 			Checksum: buf[16],
 		}
 
 		// Accelerometer
-		accel, err = processAccelFrame(&frm)
+		accel, err = processAccelFrame(&frame)
 		if err != nil {
+			// FIXME: Handle error
 			continue
 		}
 

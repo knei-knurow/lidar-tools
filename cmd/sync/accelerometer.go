@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/knei-knurow/lidar-tools/frame"
+	"github.com/knei-knurow/lidar-tools/frames"
 )
 
 type AccelData struct {
@@ -37,25 +37,25 @@ func calibrate(data *AccelData, calib *AccelData) {
 	data.zGyro += calib.zGyro
 }
 
-func processAccelFrame(frm *frame.Frame) (AccelData, error) {
+func processAccelFrame(frame *frames.Frame) (AccelData, error) {
 	timept := time.Now()
 	var data AccelData
 
-	if frm.Header[0] != 'L' || frm.Header[1] != 'D' || frm.Header[2] != '-' {
-		return data, errors.New("Bad frame header.")
+	if frame.Header[0] != 'L' || frame.Header[1] != 'D' || frame.Header[2] != '-' {
+		return data, errors.New("bad frame header")
 	}
 
-	if crc := frame.CalculateCRC(frm.Data); crc != frm.Checksum {
+	if crc := frames.CalculateCRC(frame.Data); crc != frame.Checksum {
 		// yeah but there is no checksum
-		// return data, errors.New("Bad checksum.")
+		// return data, errors.New("bad checksum")
 	}
 
-	data.xAccel = mergeBytes(frm.Data[0], frm.Data[1])
-	data.yAccel = mergeBytes(frm.Data[2], frm.Data[3])
-	data.zAccel = mergeBytes(frm.Data[4], frm.Data[5])
-	data.xGyro = mergeBytes(frm.Data[6], frm.Data[7])
-	data.yGyro = mergeBytes(frm.Data[8], frm.Data[9])
-	data.zGyro = mergeBytes(frm.Data[10], frm.Data[11])
+	data.xAccel = mergeBytes(frame.Data[0], frame.Data[1])
+	data.yAccel = mergeBytes(frame.Data[2], frame.Data[3])
+	data.zAccel = mergeBytes(frame.Data[4], frame.Data[5])
+	data.xGyro = mergeBytes(frame.Data[6], frame.Data[7])
+	data.yGyro = mergeBytes(frame.Data[8], frame.Data[9])
+	data.zGyro = mergeBytes(frame.Data[10], frame.Data[11])
 	data.timept = timept
 
 	calibrate(&data, &accelCalib)

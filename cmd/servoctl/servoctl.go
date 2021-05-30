@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/jacobsa/go-serial/serial"
-	"github.com/knei-knurow/lidar-tools/frame"
+	"github.com/knei-knurow/lidar-tools/frames"
 )
 
 var (
@@ -53,7 +53,7 @@ func main() {
 	defer port.Close()
 
 	if value == -1 {
-		fmt.Println("finish: -1 entered")
+		fmt.Println("stop because -1 entered")
 		os.Exit(0)
 	}
 
@@ -70,12 +70,12 @@ func main() {
 	}
 
 	inputByte := uint16(value)
-	f := frame.EncodeFrame(inputByte)
+	frame := frames.EncodeFrame(inputByte)
 
-	fmt.Printf("frame: %s\n", f)
-	for i, currentByte := range f {
+	fmt.Printf("frame: %s\n", frame)
+	for i, currentByte := range frame {
 		fmt.Println("---")
-		fmt.Printf("%d %s will be sent\n", i, frame.DescribeByte(currentByte))
+		fmt.Printf("%d %s will be sent\n", i, frames.DescribeByte(currentByte))
 		_, err := port.Write([]byte{currentByte})
 		if err != nil {
 			log.Fatalf("%d byte: failed to write it to port: %v\n", i, err)
@@ -98,11 +98,11 @@ func main() {
 		fullValue += uint16(output[1])
 
 		for i, b := range output {
-			fmt.Printf("%d %s\n", i, frame.DescribeByte(b))
+			fmt.Printf("%d %s\n", i, frames.DescribeByte(b))
 		}
 
 		fmt.Printf("full value (uint16): %d\n", fullValue)
 	}
 
-	fmt.Println("finish")
+	fmt.Println("stop")
 }
