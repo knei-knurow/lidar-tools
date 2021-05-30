@@ -28,3 +28,28 @@ Programs in this repository:
   `$ ./sync --port /dev/tty.usbserial-14220`
 
   TODO: add more description to `sync`
+
+- **misc/scan-dummy**
+  Genereate dummy data to imitate the original lidar-scan output.
+
+  `$ ./lidar-dummy`
+  
+  Time differences are represended as milliseconds (like the original one). `stout` is used for data output. More detaled info in [lidar-scan repository](https://github.com/knei-knurow/lidar-scan#point-cloud-output). 
+  
+  Example output structure:
+  ```
+  # a comment
+  ! 0 0
+  120  100
+  240  100
+  360  100
+  ! 1 500
+  120  200
+  240  200
+  360  200
+  ! 2 500
+  120  300
+  240  300
+  360  300
+  ! 3 500
+  ```

@@ -1,9 +1,10 @@
-all: receiver servoctl sync transmitter
+all: receiver servoctl sync transmitter scandummy
 
 RECEIVER := ./cmd/receiver
 SERVOCTL:= ./cmd/servoctl
 SYNC := ./cmd/sync
 TRANSMITTER := ./cmd/transmitter
+SCAN_DUMMY := ./misc/scan-dummy
 
 receiver: $(RECEIVER)/receiver.go
 	go build $(RECEIVER)/receiver.go
@@ -17,6 +18,9 @@ sync: $(SYNC)/sync.go
 transmitter: $(TRANSMITTER)/transmitter.go
 	go build $(TRANSMITTER)/transmitter.go $(TRANSMITTER)/cloud.go
 
+scandummy: $(SCAN_DUMMY)/scan-dummy.go
+	go build  $(SCAN_DUMMY)/scan-dummy.go
+
 install:
 	cp ./receiver /usr/local/bin
 	cp ./servoctl /usr/local/bin
@@ -24,4 +28,4 @@ install:
 	cp ./transmitter /usr/local/bin
 
 clean:
-	rm -f receiver servoctl sync transmitter
+	rm -f receiver servoctl sync transmitter scan-dummy
