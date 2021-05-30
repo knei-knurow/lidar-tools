@@ -29,15 +29,16 @@ func init() {
 	flag.BoolVar(&accelOut, "accel", true, "print accelerometer data on stdout")
 	flag.BoolVar(&servoOut, "servo", true, "print set servo position on stdout")
 	flag.BoolVar(&lidarOut, "lidar", true, "print lidar data on stdout")
+
+	flag.Parse()
+	log.Println("starting...")
 }
 
 func main() {
-	flag.Parse()
-
-	log.Println("starting...")
-
+	// Writers initialization
 	writer := bufio.NewWriter(os.Stdout)
 
+	// Serial port initialization
 	options := serial.OpenOptions{
 		PortName:        portName,
 		BaudRate:        baudRate,
@@ -46,40 +47,26 @@ func main() {
 		MinimumReadSize: 1,
 		ParityMode:      0, // no parity
 	}
-
 	port, err := serial.Open(options)
 	if err != nil {
 		log.Fatalf("failed to open port %s: %v\n", portName, err)
 	}
 	defer port.Close()
-
 	log.Println("connection established")
 
-	// Sources of data
+	// Sources of data initialization
 	accel := AccelData{}
 	servo := Servo{positon: 3600, positonMin: 1600, positonMax: 4400, vector: 60}
 	lidar := Lidar{
-		rpm:  660,
-		mode: rplidarModeDefault,
-		path: "scan-dummy.exe", // using windows, sorry :<
+		Rpm:  660,
+		Mode: rplidarModeDefault,
+		Path: "scan-dummy.exe", // using windows, sorry :<
 	}
 
-	// Lidar init
-	lidar.processStart()
-	// scanner := bufio.NewScanner(lidar.stdout)
-	// scanner.Split(bufio.ScanLines)
-	// if scanner.Scan() {
-	// 	line := scanner.Text()
-	// 	fmt.Println(line)
-	// }
-	// if err := scanner.Err(); err != nil {
-	// 	panic(err)
-	// }
-	// if err = lidar.processClose(); err != nil {
-	// 	panic(err)
-	// }
+	// Start lidar loop
+	go lidar.LoopStart()
 
-	// Data reading loop
+	// Start accelerometer/servo loop
 	for {
 		// Servo: Sending data
 		servo.move()
