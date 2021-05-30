@@ -3,6 +3,7 @@
 package frames
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 )
@@ -78,14 +79,36 @@ func Assemble(header []byte, data []byte, checksum byte) (frame Frame) {
 	return
 }
 
+// Verify checks whether the frame is valid (i.e of correct format).
+//
+// The frame has to:
+//
+// - have exactly 1 plus sign ("+")
+//
+// - have exactly 1 hash sign ("#")
+//
+// - its checksum must be correct
+func Verify(frame Frame) bool {
+	if bytes.Count(frame, []byte{'+'}) != 1 {
+		return false
+	}
+
+	if bytes.Count(frame, []byte{'#'}) != 1 {
+		return false
+	}
+
+	checksum := CalculateChecksum(frame)
+	return checksum == frame.Checksum()
+}
+
 // CalculateChecksum calculates the simple CRC checksum of frame.
 //
 // It takes all frame's bytes into account, except the last byte, because
 // the last byte is the CRC itself.
-func CalculateChecksum(f Frame) (crc byte) {
-	crc = f[0]
-	for i := 1; i < len(f)-1; i++ {
-		crc ^= f[i]
+func CalculateChecksum(frame Frame) (crc byte) {
+	crc = frame[0]
+	for i := 1; i < len(frame)-1; i++ {
+		crc ^= frame[i]
 	}
 
 	return
