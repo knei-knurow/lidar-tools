@@ -36,26 +36,25 @@ func (f Frame) SetHeader(header [2]byte) {
 
 // SetData sets frame's data and recalculates CRC.
 // TODO: discuss how this should work.
-func (f Frame) SetData(data []byte) {
-	// allocate enough space for data
-	if len(f)-3 > len(data) {
-		
-	}
+// func (f Frame) SetData(data []byte) {
+// 	// allocate enough space for data
+// 	if len(f)-3 > len(data) {
+// 		f = copy()
+// 	}
 
-	f = "MT+"
+// 	f = "MT+"
 
-	for i, b := range data {
-		placeAt := 3 + i
-		if placeAt > len(f) {
-			f = append(f, )
-			copy
-		}
-		f[] = b
-	}
-	
+// 	for i, b := range data {
+// 		placeAt := 3 + i
+// 		if placeAt > len(f) {
+// 			f = append(f, )
+// 			copy
+// 		}
+// 		f[] = b
+// 	}
 
-	// recalculate CRC
-}
+// 	// recalculate CRC
+// }
 
 // Header returns frame's part from fourth to antepenultimate byte.
 func (f Frame) Data() []byte {
