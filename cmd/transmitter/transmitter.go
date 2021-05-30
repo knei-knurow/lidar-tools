@@ -19,17 +19,19 @@ var (
 )
 
 func init() {
+	log.SetFlags(0)
+	log.SetPrefix("transmitter: ")
+
 	flag.StringVar(&dest, "dest", "192.168.1.1", "address to send packets to")
 	flag.StringVar(&port, "port", "8080", "port on dest to route packets to")
 }
 
 func main() {
 	flag.Parse()
-	log.SetFlags(0)
 
 	conn, err := net.Dial("udp", dest+":"+port)
 	if err != nil {
-		log.Fatalln("transmitter: failed to dial:", err)
+		log.Fatalln("failed to dial:", err)
 	}
 	defer conn.Close()
 
@@ -41,10 +43,11 @@ func main() {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				fmt.Println("transmitter: end of file")
+				fmt.Println("end of file")
 				break
+			} else {
+				log.Fatalln("failed to read: ", err)
 			}
-			log.Fatalln("transmitter:", err)
 		}
 
 		if strings.HasPrefix(line, "#") {
@@ -56,7 +59,7 @@ func main() {
 
 			cloudIndex, elapsed, err := getCloudData(line)
 			if err != nil {
-				log.Fatalln("transmitter: failed to get cloud data for line =", line)
+				log.Fatalf(" failed to get cloud data for line %s\n", line)
 			}
 			time.Sleep(time.Duration(elapsed) * time.Millisecond)
 
@@ -73,8 +76,8 @@ func main() {
 func send(conn net.Conn, data []byte, cloudIndex int, elapsed int) {
 	n, err := conn.Write(data)
 	if err != nil {
-		log.Fatalln("transmitter: failed to write to conn:", err)
+		log.Fatalln("failed to write to connection:", err)
 	}
 
-	fmt.Printf("transmitter: sent chunk of size %d KB (cloud %d, t %d)\n", n/1024, cloudIndex, elapsed)
+	fmt.Printf("sent chunk of size %d KB (cloud %d, t %d)\n", n/1024, cloudIndex, elapsed)
 }
