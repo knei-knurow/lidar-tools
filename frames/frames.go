@@ -4,19 +4,28 @@ package frames
 
 import (
 	"fmt"
+	"strings"
 )
 
 // FrameHeader represents the type of a frame. It takes the form of 2 uppercase ASCII characters.
-type FrameHeader string
+// type FrameHeader string
 
+// Standard frame headers. Must be ASCII-only strings.
 const (
-	FrameLidar  FrameHeader = "LD" // Frame format used for lidar-related stuff.
-	FrameMotors FrameHeader = "MT" // Frame format used for motors-related stuff.
+	// Frame format used for lidar-related stuff.
+	LidarHeader = "LD"
+
+	// Frame format used for motors-related stuff.
+	MotorsHeader = "MT"
 )
 
 // Frame represents a frame that can be e.g sent by USART.
 //
-// Header is always 2 bytes, CRC is always 1 byte.
+// Frame starts with an arbitrary-length header (thought it is almost always 2 bytes).
+// After a header comes a plus sign ("+").
+// Then comes an arbitrary-length data.
+// Data is terminated with a hash sign ("#").
+// The last byte is a simple 8-bit CRC checksum.
 //
 // Example frame (H = header byte, D = data byte, C = CRC byte):
 //
@@ -25,48 +34,38 @@ type Frame []byte
 
 // Header returns frame's 2 leading bytes.
 func (f Frame) Header() []byte {
-	return f[0:2]
+	end := strings.IndexByte(string(f), '+')
+	return f[0:end]
 }
 
-// SetHeader sets frame's header.
-func (f Frame) SetHeader(header [2]byte) {
-	f[0] = header[0]
-	f[1] = header[1]
-}
-
-// SetData sets frame's data and recalculates CRC.
-// TODO: discuss how this should work.
-// func (f Frame) SetData(data []byte) {
-// 	// allocate enough space for data
-// 	if len(f)-3 > len(data) {
-// 		f = copy()
-// 	}
-
-// 	f = "MT+"
-
-// 	for i, b := range data {
-// 		placeAt := 3 + i
-// 		if placeAt > len(f) {
-// 			f = append(f, )
-// 			copy
-// 		}
-// 		f[] = b
-// 	}
-
-// 	// recalculate CRC
-// }
-
-// Header returns frame's part from fourth to antepenultimate byte.
+// Data returns frame's data part from the first byte after a plus sign ("+") up
+// to the antepenultimate (last but one - 1) byte.
 func (f Frame) Data() []byte {
-	return f[3 : len(f)-3]
+	start := strings.IndexByte(string(f), '+')
+	return f[start+1 : len(f)-2]
 }
 
-// Header returns frame's last byte - a simple CRC checksum.
+// Checksum returns frame's last byte - a simple CRC checksum.
 func (f Frame) Checksum() byte {
 	return f[len(f)-1]
 }
 
-// CalculateChecksum calculates the CRC checksum of frame.
+// CreateFrame creates a new frame.
+// The frame starts with header and contains data.
+// It also calculates the checksum using frames.CalculateChecksum.
+func CreateFrame(header []byte, data []byte) (frame Frame) {
+	frame = make(Frame, len(header)+1+len(data)+2)
+
+	copy(frame[:len(header)], header)
+	frame[len(header)] = '+'
+	copy(frame[len(header)+1:len(frame)-2], data)
+	frame[len(frame)-2] = '#'
+	frame[len(frame)-1] = CalculateChecksum(frame)
+
+	return
+}
+
+// CalculateChecksum calculates the simple CRC checksum of frame.
 //
 // It takes all frame's bytes into account, except the last byte, because
 // the last byte is the CRC itself.
@@ -75,6 +74,7 @@ func CalculateChecksum(f Frame) (crc byte) {
 	for i := 1; i < len(f)-1; i++ {
 		crc ^= f[i]
 	}
+
 	return
 }
 
