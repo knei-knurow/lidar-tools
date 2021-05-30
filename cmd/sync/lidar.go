@@ -12,6 +12,19 @@ import (
 	"time"
 )
 
+// lidar constants
+const (
+	lidarMaxDataSize = 8192
+)
+
+// rplidar scanning modes
+const (
+	rplidarModeBoost       = 2
+	rplidarModeSensitivity = 3
+	rplidarModeStability   = 4
+	rplidarModeDefault     = rplidarModeSensitivity
+)
+
 // Represents a single angle+dist measurement
 type Point struct {
 	Angle float32 // angle in degrees
@@ -21,20 +34,13 @@ type Point struct {
 
 // Contains one full-360deg lidar point cloud
 type LidarCloud struct {
-	Id        int       //
-	TimeBegin time.Time // time point of starting line read (line starting with '!')
-	TimeDiff  int       // number of milliseconds of current cloud measurement (received from lidar-scan)
-	timeEnd   time.Time // timeBegin increased by timeDiff milliseconds
-	Data      []Point   // measurements data
+	Id        int                     //
+	TimeBegin time.Time               // time point of starting line read (line starting with '!')
+	TimeDiff  int                     // number of milliseconds of current cloud measurement (received from lidar-scan)
+	timeEnd   time.Time               // timeBegin increased by timeDiff milliseconds
+	Data      [lidarMaxDataSize]Point // measurements data
+	Size      uint                    // number of used points in Data
 }
-
-// rplidar scanning modes
-const ( // rplidar modes
-	rplidarModeBoost       = 2
-	rplidarModeSensitivity = 3
-	rplidarModeStability   = 4
-	rplidarModeDefault     = rplidarModeSensitivity
-)
 
 // General lidar parameters
 type Lidar struct {
@@ -114,34 +120,52 @@ func (lidar *Lidar) LoopStart() (err error) {
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if len(line) == 0 {
-			continue
+
+		if err := lidar.LineProcess(line, &cloud); err != nil {
+			log.Printf("unable to parse line: %s\n", err)
+			// TODO: buffer overflow error handling (but tbh it never happens)
 		}
-
-		if line[0] == '!' { // New cloud
-			var cnt int
-			var timeDiff int
-			if _, err := fmt.Sscanf(line, "! %d %d", &cnt, &timeDiff); err != nil {
-				log.Println("unable to process lidar starting line.")
-				continue
-			}
-
-			cloud = LidarCloud{
-				Id:        cnt,
-				TimeBegin: time.Now(),
-				TimeDiff:  timeDiff,
-				timeEnd:   time.Now().Add(time.Millisecond * time.Duration(timeDiff)),
-			}
-			log.Printf("processing new cloud (id:%d, timediff:%dms)\n", cloud.Id, cloud.TimeDiff)
-		} else { // New point
-
-		}
-
 	}
 
 	if err := scanner.Err(); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (lidar *Lidar) LineProcess(line string, cloud *LidarCloud) (err error) {
+	if len(line) == 0 {
+		return
+	}
+
+	switch line[0] {
+	case '#':
+	case '!':
+		var cnt, timeDiff int
+		if _, err := fmt.Sscanf(line, "! %d %d", &cnt, &timeDiff); err != nil {
+			return errors.New("invalid starting line.")
+		}
+
+		log.Printf("processed new point cloud (id:%d, timediff:%dms, size:%d)\n", cloud.Id, cloud.TimeDiff, cloud.Size)
+
+		*cloud = LidarCloud{
+			Id:        cnt + 1,
+			TimeBegin: time.Now(),
+			TimeDiff:  timeDiff,
+			timeEnd:   time.Now().Add(time.Millisecond * time.Duration(timeDiff)),
+		}
+	default:
+		var angle, dist float32
+		if _, err := fmt.Sscanf(line, "%f %f", &angle, &dist); err != nil {
+			return fmt.Errorf("invalid data line: \"%s\"\n", line)
+		}
+
+		cloud.Size++
+		if cloud.Size >= lidarMaxDataSize {
+			return errors.New("data buffer overflow")
+		}
+		cloud.Data[cloud.Size] = Point{angle, dist}
+	}
 	return nil
 }
