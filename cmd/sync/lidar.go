@@ -107,8 +107,13 @@ func (lidar *Lidar) ProcessKill() (err error) {
 	return nil
 }
 
+// Starts the lidar-scan process and runs a loop responsible for reading and
+// processing lidar data from redirected stdout. Designed to be runned in a
+// goroutine.
+// TODO: This loop should take some channels? or other stuff which allows it
+// to communicate with other concurrent goroutines.
 func (lidar *Lidar) LoopStart() (err error) {
-	if err != lidar.ProcessStart() {
+	if err := lidar.ProcessStart(); err != nil {
 		return err
 	}
 
@@ -132,6 +137,7 @@ func (lidar *Lidar) LoopStart() (err error) {
 	return nil
 }
 
+// Takes a single line form lidar-scan stdout, processes it, and modifies cloud
 func (lidar *Lidar) LineProcess(line string, cloud *LidarCloud) (err error) {
 	if len(line) == 0 {
 		return
@@ -145,6 +151,7 @@ func (lidar *Lidar) LineProcess(line string, cloud *LidarCloud) (err error) {
 			return errors.New("invalid starting line.")
 		}
 
+		// TODO: this line should be printed only if lidarOut variable in sync.go equals true
 		log.Printf("processed new point cloud (id:%d, timediff:%dms, size:%d)\n", cloud.Id, cloud.TimeDiff, cloud.Size)
 
 		*cloud = LidarCloud{
@@ -164,6 +171,24 @@ func (lidar *Lidar) LineProcess(line string, cloud *LidarCloud) (err error) {
 			return errors.New("data buffer overflow")
 		}
 		cloud.Data[cloud.Size] = Point{angle, dist}
+	}
+	return nil
+}
+
+// Modifies the parametres passed to lidar-scan in order to change its bahaviour.
+// In practice, the is no way to modify those parameters while lidar-scan is running,
+// so the function restarts the process and passes updated values.
+// Such a solution should work in most cases.
+func (lidar *Lidar) ProcessUpdateArgs(args string) (err error) {
+	log.Println("changing lidar-scan process args")
+	if err := lidar.ProcessClose(); err != nil {
+		return err
+	}
+
+	lidar.Args = args
+
+	if err := lidar.ProcessStart(); err != nil {
+		return err
 	}
 	return nil
 }
