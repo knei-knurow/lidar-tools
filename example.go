@@ -8,10 +8,9 @@ import (
 
 func main() {
 	f := [][]byte{
-		{'A'},
-		{'t', 'e', 's', 't'},
+		{'k', 'n', 'e', 'i'},
+		{'d', 'o', 'n', 'd', 'u'},
 		{'d', 'u', 'p', 'c', 'i', 'a'},
-		{'l', 'o', 'l', 'x', 'd'},
 	}
 
 	for i, data := range f {

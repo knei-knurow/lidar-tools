@@ -1,5 +1,5 @@
 // Package frames provides standard functions to deal with
-// frames used in lidar-related tools.
+// data frames in rover project.
 package frames
 
 import (
@@ -29,10 +29,10 @@ const (
 //
 // Example frame (H = header byte, D = data byte, C = CRC byte):
 //
-// BB+DDDDD#C
+// HH+DDDDD#C
 type Frame []byte
 
-// Header returns frame's 2 leading bytes.
+// Header returns frame's header. It is usually 2 bytes.
 func (f Frame) Header() []byte {
 	end := strings.IndexByte(string(f), '+')
 	return f[0:end]

@@ -1,50 +1,72 @@
-package frames
+package frames_test
 
 import (
+	"bytes"
+	"fmt"
 	"testing"
+
+	"github.com/knei-knurow/lidar-tools/frames"
 )
 
 // FIXME: fix tests
-func TestCalculateCRC(t *testing.T) {
-	cases := []struct {
-		data []byte
-		crc  byte
-		name string
+func TestCreateFrame(t *testing.T) {
+	testCases := []struct {
+		inputHeader      []byte
+		inputData        []byte
+		expectedChecksum byte
 	}{
 		{
-			data: []byte("0"),
-			crc:  48,
-			name: "Test Case 1",
+			inputHeader:      []byte{'L', 'D'},
+			inputData:        []byte{},
+			expectedChecksum: 0x00,
 		},
 		{
-			data: []byte("01"),
-			crc:  1,
-			name: "Test Case 2",
+			inputHeader:      []byte{'L', 'D'},
+			inputData:        []byte{'A'},
+			expectedChecksum: 0x41,
 		},
 		{
-			data: []byte("ABC"),
-			crc:  64,
-			name: "Test Case 3",
+			inputHeader:      []byte{'L', 'D'},
+			inputData:        []byte{'t', 'e', 's', 't'},
+			expectedChecksum: 0x16,
 		},
 		{
-			data: []byte{1, 2, 3, 4, 5},
-			crc:  1,
-			name: "Test Case 4",
+			inputHeader:      []byte{'L', 'D'},
+			inputData:        []byte{'d', 'u', 'p', 'c', 'i', 'a'},
+			expectedChecksum: 0x0a,
 		},
 		{
-			data: []byte{123, 153, 223},
-			crc:  61,
-			name: "Test Case 5",
+			inputHeader:      []byte{'L', 'D'},
+			inputData:        []byte{'l', 'o', 'l', 'x', 'd'},
+			expectedChecksum: 0x73,
+		},
+		{
+			inputHeader:      []byte{'B', 'I', 'G'},
+			inputData:        []byte{'d', 'o', 'n', 'd', 'u'},
+			expectedChecksum: 0x30,
+		},
+		{
+			inputHeader:      []byte{},
+			inputData:        []byte{},
+			expectedChecksum: 0x08,
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			got := CalculateChecksum(tc.data)
-			want := tc.crc
+	for i, tc := range testCases {
+		testName := fmt.Sprintf("test %d", i)
+		t.Run(testName, func(t *testing.T) {
+			gotFrame := frames.CreateFrame(tc.inputHeader, tc.inputData)
 
-			if got != want {
-				t.Errorf("got %s, want %s", DescribeByte(got), DescribeByte(want))
+			if !bytes.Equal(gotFrame.Header(), tc.inputHeader) {
+				t.Errorf("got header % x, want header % x", gotFrame.Header(), tc.inputHeader)
+			}
+
+			if !bytes.Equal(gotFrame.Data(), tc.inputData) {
+				t.Errorf("got data % x, want data % x", gotFrame.Data(), tc.inputData)
+			}
+
+			if gotFrame.Checksum() != tc.expectedChecksum {
+				t.Errorf("got checksum % x, want checksum % x", gotFrame.Checksum(), tc.expectedChecksum)
 			}
 		})
 	}
