@@ -88,6 +88,7 @@ func main() {
 		}
 
 		// TODO: Clever Buffer -> Frame conversion
+		// TODO: Use frames.Assemble
 		frame := frames.Frame{
 			Header:   frames.FrameHeader(buf[0:3]),
 			Data:     buf[3:15],

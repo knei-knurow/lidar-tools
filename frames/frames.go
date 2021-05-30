@@ -65,6 +65,19 @@ func Create(header []byte, data []byte) (frame Frame) {
 	return
 }
 
+// Assemble creates a frame from already available values.
+func Assemble(header []byte, data []byte, checksum byte) (frame Frame) {
+	frame = make(Frame, len(header)+1+len(data)+2)
+
+	copy(frame[:len(header)], header)
+	frame[len(header)] = '+'
+	copy(frame[len(header)+1:len(frame)-2], data)
+	frame[len(frame)-2] = '#'
+	frame[len(frame)-1] = checksum
+
+	return
+}
+
 // CalculateChecksum calculates the simple CRC checksum of frame.
 //
 // It takes all frame's bytes into account, except the last byte, because
