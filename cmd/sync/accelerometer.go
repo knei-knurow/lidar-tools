@@ -41,15 +41,16 @@ func processAccelFrame(frame *frames.Frame) (AccelData, error) {
 	timept := time.Now()
 	var data AccelData
 
-	if frame.Header[0] != 'L' || frame.Header[1] != 'D' || frame.Header[2] != '-' {
+	if frame.Header()[0] != 'L' || frame.Header()[1] != 'D' || frame.Header()[2] != '-' {
 		return data, errors.New("bad frame header")
 	}
 
-	if crc := frames.CalculateCRC(frame.Data); crc != frame.Checksum {
+	if crc := frames.CalculateChecksum(*frame); crc != frame.Checksum() {
 		// yeah but there is no checksum
 		// return data, errors.New("bad checksum")
 	}
 
+	// TODO: Adjust - I'm too tired right now and will fuck it up...
 	data.xAccel = mergeBytes(frame.Data[0], frame.Data[1])
 	data.yAccel = mergeBytes(frame.Data[2], frame.Data[3])
 	data.zAccel = mergeBytes(frame.Data[4], frame.Data[5])

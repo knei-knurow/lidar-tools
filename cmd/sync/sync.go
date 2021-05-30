@@ -69,8 +69,9 @@ func main() {
 	for {
 		// Servo: Sending data
 		servo.move()
-		inputByte := uint16(servo.positon)
-		f := frames.EncodeFrame(inputByte)
+		inputByte := servo.positon
+		data := []byte{byte(inputByte >> 8), byte(inputByte)} // TODO: Check whether correct
+		f := frames.CreateFrame([]byte(frames.LidarHeader), data)
 		for i, currentByte := range f {
 			if _, err := port.Write([]byte{currentByte}); err != nil {
 				log.Fatalf("%d byte: failed to write it to port: %v\n", i, err)
