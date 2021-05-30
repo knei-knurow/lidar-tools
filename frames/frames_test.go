@@ -55,7 +55,7 @@ func TestCreateFrame(t *testing.T) {
 	for i, tc := range testCases {
 		testName := fmt.Sprintf("test %d", i)
 		t.Run(testName, func(t *testing.T) {
-			gotFrame := frames.CreateFrame(tc.inputHeader, tc.inputData)
+			gotFrame := frames.Create(tc.inputHeader, tc.inputData)
 
 			if !bytes.Equal(gotFrame.Header(), tc.inputHeader) {
 				t.Errorf("got header % x, want header % x", gotFrame.Header(), tc.inputHeader)

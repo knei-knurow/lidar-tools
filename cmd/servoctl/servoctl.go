@@ -71,7 +71,7 @@ func main() {
 
 	inputByte := uint16(value)
 	data := []byte{byte(inputByte >> 8), byte(inputByte)} // TODO: Check whether correct
-	frame := frames.CreateFrame([]byte(frames.LidarHeader), data)
+	frame := frames.Create([]byte(frames.LidarHeader), data)
 
 	fmt.Printf("frame: %s\n", frame)
 	for i, currentByte := range frame {

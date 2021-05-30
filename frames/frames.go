@@ -50,10 +50,10 @@ func (f Frame) Checksum() byte {
 	return f[len(f)-1]
 }
 
-// CreateFrame creates a new frame.
+// Create creates a new frame.
 // The frame starts with header and contains data.
 // It also calculates the checksum using frames.CalculateChecksum.
-func CreateFrame(header []byte, data []byte) (frame Frame) {
+func Create(header []byte, data []byte) (frame Frame) {
 	frame = make(Frame, len(header)+1+len(data)+2)
 
 	copy(frame[:len(header)], header)

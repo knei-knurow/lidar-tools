@@ -15,7 +15,7 @@ func main() {
 
 	for i, data := range f {
 		// Demostration of frames.CreateFrame function.
-		frame := frames.CreateFrame([]byte(frames.LidarHeader), data)
+		frame := frames.Create([]byte(frames.LidarHeader), data)
 		fmt.Printf("--- %d\n", i)
 		fmt.Printf("data: % x\n", string(data))
 		fmt.Printf("frame: % x\n", string(frame))
