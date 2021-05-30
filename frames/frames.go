@@ -4,7 +4,6 @@ package frames
 
 import (
 	"fmt"
-	"strings"
 )
 
 // FrameHeader represents the type of a frame. It takes the form of 2 uppercase ASCII characters.
@@ -15,54 +14,73 @@ const (
 	FrameMotors FrameHeader = "MT" // Frame format used for motors-related stuff.
 )
 
-// Frame is a standard frame used in the rover project.
-type Frame struct {
-	Header   FrameHeader
-	Data     []byte
-	Checksum byte
+// Frame represents a frame that can be e.g sent by USART.
+//
+// Header is always 2 bytes, CRC is always 1 byte.
+//
+// Example frame (H = header byte, D = data byte, C = CRC byte):
+//
+// BB+DDDDD#C
+type Frame []byte
+
+// Header returns frame's 2 leading bytes.
+func (f Frame) Header() []byte {
+	return f[0:2]
+}
+
+// SetHeader sets frame's header.
+func (f Frame) SetHeader(header [2]byte) {
+	f[0] = header[0]
+	f[1] = header[1]
+}
+
+// SetData sets frame's data and recalculates CRC.
+// TODO: discuss how this should work.
+func (f Frame) SetData(data []byte) {
+	// allocate enough space for data
+	if len(f)-3 > len(data) {
+		
+	}
+
+	f = "MT+"
+
+	for i, b := range data {
+		placeAt := 3 + i
+		if placeAt > len(f) {
+			f = append(f, )
+			copy
+		}
+		f[] = b
+	}
+	
+
+	// recalculate CRC
+}
+
+// Header returns frame's part from fourth to antepenultimate byte.
+func (f Frame) Data() []byte {
+	return f[3 : len(f)-3]
+}
+
+// Header returns frame's last byte - a simple CRC checksum.
+func (f Frame) Checksum() byte {
+	return f[len(f)-1]
+}
+
+// CalculateChecksum calculates the CRC checksum of frame.
+//
+// It takes all frame's bytes into account, except the last byte, because
+// the last byte is the CRC itself.
+func CalculateChecksum(f Frame) (crc byte) {
+	crc = f[0]
+	for i := 1; i < len(f)-1; i++ {
+		crc ^= f[i]
+	}
+	return
 }
 
 func (f Frame) String() string {
-	return fmt.Sprintf("%s+%x#%x", f.Header, f.Data, f.Checksum)
-}
-
-// EncodeRawFrame creates a frame transporting data.
-// It does not have CRC checksum.
-func EncodeRawFrame(data uint16) (frame []byte) {
-	var builder strings.Builder
-	builder.Grow(6)
-
-	builder.WriteString("LD+")
-	builder.WriteByte(byte(data >> 8)) // Write most significant 8 bits
-	builder.WriteByte(byte(data))      // Write least significant 8 bits
-	builder.WriteString("#")
-
-	frame = []byte(builder.String())
-	return
-}
-
-// EncodeFrame creates a standard frame transporting data.
-func EncodeFrame(data uint16) (frame []byte) {
-	var builder strings.Builder
-	builder.Grow(2)
-
-	rawFrame := EncodeRawFrame(data)
-	builder.WriteString(string(rawFrame))
-
-	crc := CalculateCRC([]byte(rawFrame))
-	builder.WriteByte(crc)
-
-	frame = []byte(builder.String())
-	return
-}
-
-// CalculateCRC calculates the CRC checksum of data.
-func CalculateCRC(data []byte) (crc byte) {
-	crc = data[0]
-	for i := 1; i < len(data); i++ {
-		crc ^= data[i]
-	}
-	return
+	return fmt.Sprintf("%s+%x#%x", f.Header(), f.Data(), f.Checksum())
 }
 
 // DescribeByte prints everything most common representations of a byte.
