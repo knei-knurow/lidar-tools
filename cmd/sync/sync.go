@@ -24,7 +24,7 @@ func init() {
 	log.SetFlags(0)
 	log.SetPrefix("sync: ")
 
-	flag.StringVar(&portName, "port", "/dev/ttyUSB0", "serial communication port")
+	flag.StringVar(&portName, "port", "COM9", "serial communication port")
 	flag.UintVar(&baudRate, "baud", 9600, "port baud rate (bps)")
 	flag.BoolVar(&accelOut, "accel", true, "print accelerometer data on stdout")
 	flag.BoolVar(&servoOut, "servo", true, "print set servo position on stdout")
@@ -55,8 +55,29 @@ func main() {
 
 	log.Println("connection established")
 
+	// Sources of data
 	accel := AccelData{}
 	servo := Servo{positon: 3600, positonMin: 1600, positonMax: 4400, vector: 60}
+	lidar := Lidar{
+		rpm:  660,
+		mode: rplidarModeDefault,
+		path: "scan-dummy.exe", // using windows, sorry :<
+	}
+
+	// Lidar init
+	lidar.processStart()
+	// scanner := bufio.NewScanner(lidar.stdout)
+	// scanner.Split(bufio.ScanLines)
+	// if scanner.Scan() {
+	// 	line := scanner.Text()
+	// 	fmt.Println(line)
+	// }
+	// if err := scanner.Err(); err != nil {
+	// 	panic(err)
+	// }
+	// if err = lidar.processClose(); err != nil {
+	// 	panic(err)
+	// }
 
 	// Data reading loop
 	for {
