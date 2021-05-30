@@ -35,10 +35,8 @@ func init() {
 }
 
 func main() {
-	// Writers initialization
 	writer := bufio.NewWriter(os.Stdout)
 
-	// Serial port initialization
 	options := serial.OpenOptions{
 		PortName:        portName,
 		BaudRate:        baudRate,
@@ -58,14 +56,14 @@ func main() {
 	accel := AccelData{}
 	servo := Servo{positon: 3600, positonMin: 1600, positonMax: 4400, vector: 60}
 	lidar := Lidar{ // TODO: make it more configurable from command line
-		Rpm:  660,
+		RPM:  660,
 		Mode: rplidarModeDefault,
 		Args: "-r 660 -m 2",
 		Path: "scan-dummy.exe",
 	}
 
 	// Start lidar loop
-	go lidar.LoopStart()
+	go lidar.StartLoop()
 
 	// Start accelerometer/servo loop
 	for {
