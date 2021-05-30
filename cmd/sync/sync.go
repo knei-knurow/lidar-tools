@@ -57,10 +57,11 @@ func main() {
 	// Sources of data initialization
 	accel := AccelData{}
 	servo := Servo{positon: 3600, positonMin: 1600, positonMax: 4400, vector: 60}
-	lidar := Lidar{
+	lidar := Lidar{ // TODO: make it more configurable from command line
 		Rpm:  660,
 		Mode: rplidarModeDefault,
-		Path: "scan-dummy.exe", // using windows, sorry :<
+		Args: "-r 660 -m 2",
+		Path: "scan-dummy.exe",
 	}
 
 	// Start lidar loop

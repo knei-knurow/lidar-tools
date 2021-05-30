@@ -47,7 +47,7 @@ type Lidar struct {
 	TimeInit time.Time     // Time of the first starting line read (line starting with '!')
 	Rpm      int           // declared rpm (but actual may differ)
 	Mode     int           // rplidar mode
-	Argv     []string      // lidar-scan process argv
+	Args     string        // lidar-scan process argv
 	Path     string        // lidar-scan path
 	Stdout   io.ReadCloser // lidar-scan stdout
 	Stderr   io.ReadCloser // lidar-scan stderr
@@ -59,17 +59,15 @@ type Lidar struct {
 // Does not check whether it has been already started.
 func (lidar *Lidar) ProcessStart() error {
 	var err error
-	lidar.process = exec.Command(lidar.Path, lidar.Argv...)
-	log.Println("starting lidar-scan process")
+	lidar.process = exec.Command(lidar.Path, lidar.Args)
+	log.Printf("starting lidar-scan process with args: %s\n", lidar.Args)
 
 	lidar.Stdout, err = lidar.process.StdoutPipe()
 	if err != nil {
 		return errors.New("Unable to get stdout of lidar-scan process.")
 	}
-	lidar.Stderr, err = lidar.process.StderrPipe()
-	if err != nil {
-		return errors.New("Unable to get stderr of lidar-scan process.")
-	}
+	lidar.process.Stderr = os.Stderr
+	lidar.Stderr = os.Stderr
 
 	err = lidar.process.Start()
 	if err != nil {

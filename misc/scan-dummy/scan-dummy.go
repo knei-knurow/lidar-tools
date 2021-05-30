@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"time"
 )
@@ -14,6 +15,10 @@ const (
 
 func main() {
 	stdout := bufio.NewWriter(os.Stdout)
+
+	log.SetPrefix("scan: ")
+	log.SetFlags(0)
+	log.Println(os.Args)
 
 	cnt := 0
 	timeStart := time.Now()
