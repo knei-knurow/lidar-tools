@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jacobsa/go-serial/serial"
@@ -81,18 +82,46 @@ func main() {
 		servo.timept = time.Now()
 
 		// Accelerometer: Reading data
-		buf := make([]byte, 32)
-		_, err = port.Read(buf)
-		if err != nil {
-			log.Println("failed to read from port:", err)
+		// TODO: this code is very messy but handles bad data much faster
+		ok, end := true, true
+		var data strings.Builder
+		for ok && end {
+			buf := make([]byte, 1)
+			_, err = port.Read(buf)
+			if err != nil {
+				log.Println("failed to read from port:", err)
+				continue
+			}
+			switch {
+			case buf[0] == 'L' && data.Len() == 0:
+				data.WriteString(string(buf[0]))
+			case buf[0] == 'D' && data.Len() == 1:
+				data.WriteString(string(buf[0]))
+			case buf[0] == '-' && data.Len() == 2:
+				data.WriteString(string(buf[0]))
+			case buf[0] == '#' && data.Len() == 15:
+				data.WriteString(string(buf[0]))
+			case buf[0] == 'S' && data.Len() == 16:
+				data.WriteString(string(buf[0]))
+				end = false
+			case data.Len() >= 3 && data.Len() <= 14:
+				data.WriteString("x")
+			default:
+				ok = false
+			}
+		}
+		if !ok {
+			if accelOut {
+				log.Printf("bad accelerometer data: %d bytes\n", data.Len()+1)
+			}
 			continue
 		}
 
 		// TODO: Clever Buffer -> Frame conversion
 		frame := frames.Frame{
-			Header:   frames.FrameHeader(buf[0:3]),
-			Data:     buf[3:15],
-			Checksum: buf[16],
+			Header:   frames.FrameHeader(data.String()[0:3]),
+			Data:     []byte(data.String()[3:15]),
+			Checksum: byte(data.String()[16]),
 		}
 
 		// Accelerometer
