@@ -7,40 +7,23 @@ import (
 )
 
 func main() {
-	// Demonstration of frame.CalculateCRC and frame.DescribeByte functions.
-	data := []byte{123, 153, 223}
-	fmt.Printf("data: %03b, crc: %s\n", data, frames.DescribeByte(frames.CalculateCRC(data)))
-
-	// Demonstration of frames.DescribeByte function.
-	// It's very useful to quickly examine what a particular byte means.
-	// See its implementation to learn few cool tricks about formatting verbs.
-
-	fmt.Printf("\n- - -\n\n")
-	for i := 0; i < 8; i++ {
-		fmt.Println(frames.DescribeByte(byte(i)))
+	f := [][]byte{
+		{'k', 'n', 'e', 'i'},
+		{'d', 'o', 'n', 'd', 'u'},
+		{'d', 'u', 'p', 'c', 'i', 'a'},
 	}
 
-	fmt.Printf("\n- - -\n\n")
-
-	// f1 and f2 are the same
-	f1 := frames.Frame{Header: frames.FrameLidar, Data: []byte{48, 48}, Checksum: 0}
-	f2 := frames.Frame{Header: frames.FrameLidar, Data: []byte("00"), Checksum: 0}
-	fmt.Println("f1:", f1, "f2:", f2)
-
-	fmt.Printf("\n- - -\n\n")
-
-	var i uint16
-	for i = 0; i < 5; i++ {
-		rf := frames.EncodeRawFrame(i)
-		f := frames.EncodeFrame(i)
-		crc := frames.CalculateCRC(rf)
-		printFrame(rf, f, crc, int(i))
+	for i, data := range f {
+		// Demostration of frames.CreateFrame function.
+		frame := frames.Create([]byte(frames.LidarHeader), data)
+		fmt.Printf("--- %d\n", i)
+		fmt.Printf("data: % x\n", string(data))
+		fmt.Printf("frame: % x\n", string(frame))
+		fmt.Printf("funcs: header: % x, data: % x, checksum: %02x\n", frame.Header(), frame.Data(), frame.Checksum())
+		for j, b := range frame {
+			// Demonstration of frames.DescribeByte function.
+			// It's very useful when you want to quickly examine what a particular byte represents.
+			fmt.Printf("%2d: %s\n", j, frames.DescribeByte(b))
+		}
 	}
-}
-
-func printFrame(rf []byte, f []byte, crc byte, i int) {
-	fmt.Println("---")
-	fmt.Printf("raw frame %d: % x\n", i, rf)
-	fmt.Printf("    frame %d: % x\n", i, f)
-	fmt.Printf("    crc   %d: %s\n", i, frames.DescribeByte(crc))
 }
