@@ -8,9 +8,6 @@ import (
 	"strings"
 )
 
-// FrameHeader represents the type of a frame. It takes the form of 2 uppercase ASCII characters.
-// type FrameHeader string
-
 // Standard frame headers. Must be ASCII-only strings.
 const (
 	// Frame format used for lidar-related stuff.
