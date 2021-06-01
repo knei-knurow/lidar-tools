@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"github.com/knei-knurow/lidar-tools/frames"
@@ -46,28 +47,30 @@ func processAccelFrame(frame *frames.Frame) (AccelData, error) {
 	}
 
 	if crc := frames.CalculateChecksum(*frame); crc != frame.Checksum() {
-		// yeah but there is no checksum
+		// yeah but there is no checksum – for now, just print it
 		// return data, errors.New("bad checksum")
+		log.Println("bad checksum")
 	}
 
-	// TODO: Adjust - I'm too tired right now and will fuck it up...
-	data.xAccel = mergeBytes(frame.Data[0], frame.Data[1])
-	data.yAccel = mergeBytes(frame.Data[2], frame.Data[3])
-	data.zAccel = mergeBytes(frame.Data[4], frame.Data[5])
-	data.xGyro = mergeBytes(frame.Data[6], frame.Data[7])
-	data.yGyro = mergeBytes(frame.Data[8], frame.Data[9])
-	data.zGyro = mergeBytes(frame.Data[10], frame.Data[11])
+	// TODO: make sure the lines below work correctly
+	fdata := frame.Data()
+	data.xAccel = mergeBytes(fdata[0], fdata[1])
+	data.yAccel = mergeBytes(fdata[2], fdata[3])
+	data.zAccel = mergeBytes(fdata[4], fdata[5])
+	data.xGyro = mergeBytes(fdata[6], fdata[7])
+	data.yGyro = mergeBytes(fdata[8], fdata[9])
+	data.zGyro = mergeBytes(fdata[10], fdata[11])
 	data.timept = timept
 
 	calibrate(&data, &accelCalib)
 	return data, nil
 }
 
-func mergeBytes(left8 byte, right8 byte) (v int) {
-	v = int((uint16(left8) << 8) | uint16(right8))
+func mergeBytes(left8 byte, right8 byte) int {
+	v := int((uint16(left8) << 8) | uint16(right8))
 	// awesome conversion to signed int
 	if v >= 32768 {
 		v = -65536 + v
 	}
-	return
+	return v
 }
