@@ -31,6 +31,7 @@ const (
 type Frame []byte
 
 // Header returns frame's header. It is usually 2 bytes.
+// FIXME: https://github.com/knei-knurow/lidar-tools/pull/6#issuecomment-852434570
 func (f Frame) Header() []byte {
 	end := strings.IndexByte(string(f), '+')
 	return f[0:end]
@@ -38,6 +39,7 @@ func (f Frame) Header() []byte {
 
 // Data returns frame's data part from the first byte after a plus sign ("+") up
 // to the antepenultimate (last but one - 1) byte.
+// FIXME:  https://github.com/knei-knurow/lidar-tools/pull/6#issuecomment-852434570
 func (f Frame) Data() []byte {
 	start := strings.IndexByte(string(f), '+')
 	return f[start+1 : len(f)-2]
