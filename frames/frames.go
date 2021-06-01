@@ -80,17 +80,17 @@ func Assemble(header []byte, data []byte, checksum byte) (frame Frame) {
 //
 // The frame has to:
 //
-// - have exactly 1 plus sign ("+")
+// - have 1 or more plus signs ("+")
 //
-// - have exactly 1 hash sign ("#")
+// - have 1 or more hash signs ("#")
 //
 // - its checksum must be correct
 func Verify(frame Frame) bool {
-	if bytes.Count(frame, []byte{'+'}) != 1 {
+	if bytes.Count(frame, []byte{'+'}) >= 1 {
 		return false
 	}
 
-	if bytes.Count(frame, []byte{'#'}) != 1 {
+	if bytes.Count(frame, []byte{'#'}) >= 1 {
 		return false
 	}
 
