@@ -56,15 +56,15 @@ func main() {
 	// Sources of data initialization
 	accel := AccelData{}
 	servo := Servo{positon: 3600, positonMin: 1600, positonMax: 4400, vector: 60}
-	lidar := Lidar{ // TODO: make it more configurable from command line
-		RPM:  660,
-		Mode: rplidarModeDefault,
-		Args: "-r 660 -m 2",
-		Path: "scan-dummy.exe",
-	}
+	// lidar := Lidar{ // TODO: make it more configurable from command line
+	// 	RPM:  660,
+	// 	Mode: rplidarModeDefault,
+	// 	Args: "-r 660 -m 2",
+	// 	Path: "scan-dummy.exe",
+	// }
 
 	// Start lidar loop
-	go lidar.StartLoop()
+	// go lidar.StartLoop()
 
 	// Start accelerometer/servo loop
 	for {
@@ -117,7 +117,7 @@ func main() {
 		}
 
 		// TODO: Make sure that it works correctly
-		frame := frames.Assemble(data[0:2], data[3:15], data[16])
+		frame := frames.Assemble(data[0:2], 12, data[3:15], data[16])
 
 		// Accelerometer
 		accel, err = processAccelFrame(&frame)
