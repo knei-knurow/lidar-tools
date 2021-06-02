@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"log"
+	"io"
 	"time"
 
 	"github.com/knei-knurow/lidar-tools/frames"
@@ -38,18 +38,42 @@ func calibrate(data *AccelData, calib *AccelData) {
 	data.zGyro += calib.zGyro
 }
 
-func processAccelFrame(frame *frames.Frame) (AccelData, error) {
+func readAceelFrame(port io.Reader, data []byte, header rune) (err error) {
+	scan := false
+	for i := 0; i < 18; i++ {
+		buf := make([]byte, 1)
+		_, err := port.Read(buf)
+		if err != nil {
+			return errors.New("cannot read from port")
+		}
+
+		if scan {
+			data[i] = buf[0]
+		} else {
+			if buf[0] == byte(header) {
+				scan = true
+				data[i] = buf[0]
+			} else {
+				return errors.New("lost some data")
+			}
+		}
+	}
+	return nil
+}
+
+func processAccelFrame(frame frames.Frame) (AccelData, error) {
 	timept := time.Now()
 	var data AccelData
 
-	if frame.Header()[0] != 'L' || frame.Header()[1] != 'D' || frame.Header()[2] != '-' {
-		return data, errors.New("bad frame header")
+	if frame[0] != frames.LidarHeader[0] ||
+		frame[1] != frames.LidarHeader[1] ||
+		frame[2] != 12 ||
+		frame[3] != '+' {
+		return data, errors.New("bad frame begin")
 	}
 
-	if crc := frames.CalculateChecksum(*frame); crc != frame.Checksum() {
-		// yeah but there is no checksum – for now, just print it
-		// return data, errors.New("bad checksum")
-		log.Println("bad checksum")
+	if !frames.Verify(frame) {
+		return data, errors.New("bad checksum")
 	}
 
 	// TODO: make sure the lines below work correctly
