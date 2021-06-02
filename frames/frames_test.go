@@ -1,64 +1,112 @@
-package frames
+package frames_test
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
+
+	"github.com/knei-knurow/lidar-tools/frames"
 )
 
-func TestCalculateCRC(t *testing.T) {
-	cases := []struct {
-		data []byte
-		crc  byte
-		name string
-	}{
-		{
-			data: []byte("0"),
-			crc:  48,
-			name: "Test Case 1",
-		},
-		{
-			data: []byte("01"),
-			crc:  1,
-			name: "Test Case 2",
-		},
-		{
-			data: []byte("ABC"),
-			crc:  64,
-			name: "Test Case 3",
-		},
-		{
-			data: []byte{1, 2, 3, 4, 5},
-			crc:  1,
-			name: "Test Case 4",
-		},
-		{
-			data: []byte{123, 153, 223},
-			crc:  61,
-			name: "Test Case 5",
-		},
-	}
+var testCases = []struct {
+	inputHeader      []byte
+	inputData        []byte
+	expectedChecksum byte
+	expectedLength   int
+}{
+	{
+		inputHeader:      []byte{'L', 'D'},
+		inputData:        []byte{},
+		expectedChecksum: 0x00,
+	},
+	{
+		inputHeader:      []byte{'L', 'D'},
+		inputData:        []byte{'A'},
+		expectedChecksum: 0x40,
+	},
+	{
+		inputHeader:      []byte{'L', 'D'},
+		inputData:        []byte{'t', 'e', 's', 't'},
+		expectedChecksum: 0x12,
+	},
+	{
+		inputHeader:      []byte{'L', 'D'},
+		inputData:        []byte{'d', 'u', 'p', 'c', 'i', 'a'},
+		expectedChecksum: 0x0c,
+	},
+	{
+		inputHeader:      []byte{'L', 'D'},
+		inputData:        []byte{'l', 'o', 'l', 'x', 'd'},
+		expectedChecksum: 0x76,
+	},
+	{
+		inputHeader:      []byte{'M', 'T'},
+		inputData:        []byte{'d', 'o', 'n', 'd', 'u'},
+		expectedChecksum: 0x60,
+	},
+	// Invalid: header must always be 2 bytes length, data equal or more than 1 byte
+	// {
+	// 	inputHeader:      []byte{},
+	// 	inputData:        []byte{},
+	// 	expectedChecksum: 0x08,
+	// },
+}
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			got := CalculateCRC(tc.data)
-			want := tc.crc
+func TestCreate(t *testing.T) {
+	for i, tc := range testCases {
+		testName := fmt.Sprintf("test %d", i)
+		t.Run(testName, func(t *testing.T) {
+			gotFrame := frames.Create(tc.inputHeader, tc.inputData)
 
-			if got != want {
-				t.Errorf("got %s, want %s", DescribeByte(got), DescribeByte(want))
+			if !bytes.Equal(gotFrame.Header(), tc.inputHeader) {
+				t.Errorf("got header % x, want header % x", gotFrame.Header(), tc.inputHeader)
+			}
+
+			if !bytes.Equal(gotFrame.Data(), tc.inputData) {
+				t.Errorf("got data % x, want data % x", gotFrame.Data(), tc.inputData)
+			}
+
+			if gotFrame.LenData() != len(tc.inputData) {
+				t.Errorf("got data length %d, want data %d", gotFrame.LenData(), len(tc.inputData))
+			}
+
+			if gotFrame.Checksum() != tc.expectedChecksum {
+				t.Errorf("got checksum % x, want checksum % x", gotFrame.Checksum(), tc.expectedChecksum)
 			}
 		})
 	}
 }
 
-func TestCreateFrame(t *testing.T) {
-	t.Run("valid frame 1", func(t *testing.T) {
-		want := []byte("LD+\x00\x00#")
+func TestAssemble(t *testing.T) {
+	for i, tc := range testCases {
+		testName := fmt.Sprintf("test %d", i)
+		t.Run(testName, func(t *testing.T) {
+			gotFrame := frames.Assemble(tc.inputHeader, byte(len(tc.inputData)), tc.inputData, tc.expectedChecksum)
 
-		got := EncodeRawFrame(0)
+			if !bytes.Equal(gotFrame.Header(), tc.inputHeader) {
+				t.Errorf("got header % x, want header % x", gotFrame.Header(), tc.inputHeader)
+			}
 
-		if !bytes.Equal(got, want) {
-			t.Errorf("got %b, want %b", got, want)
-			t.Errorf("aka got %d, want %d", got, want)
-		}
-	})
+			if !bytes.Equal(gotFrame.Data(), tc.inputData) {
+				t.Errorf("got data % x, want data % x", gotFrame.Data(), tc.inputData)
+			}
+
+			if gotFrame.Checksum() != tc.expectedChecksum {
+				t.Errorf("got checksum % x, want checksum % x", gotFrame.Checksum(), tc.expectedChecksum)
+			}
+		})
+	}
+}
+
+func TestVerify(t *testing.T) {
+	for i, tc := range testCases {
+		testName := fmt.Sprintf("test %d", i)
+		t.Run(testName, func(t *testing.T) {
+			gotFrame := frames.Create(tc.inputHeader, tc.inputData)
+
+			if !frames.Verify(gotFrame) {
+				t.Errorf("frame verification failed")
+			}
+		})
+	}
 }

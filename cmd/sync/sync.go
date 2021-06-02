@@ -8,13 +8,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/jacobsa/go-serial/serial"
 	"github.com/knei-knurow/lidar-tools/frames"
+	"github.com/tarm/serial"
 )
 
 var (
 	portName string
-	baudRate uint
+	baudRate int
 	accelOut bool
 	servoOut bool
 	lidarOut bool
@@ -25,7 +25,7 @@ func init() {
 	log.SetPrefix("sync: ")
 
 	flag.StringVar(&portName, "port", "COM9", "serial communication port")
-	flag.UintVar(&baudRate, "baud", 9600, "port baud rate (bps)")
+	flag.IntVar(&baudRate, "baud", 9600, "port baud rate (bps)")
 	flag.BoolVar(&accelOut, "accel", true, "print accelerometer data on stdout")
 	flag.BoolVar(&servoOut, "servo", true, "print set servo position on stdout")
 	flag.BoolVar(&lidarOut, "lidar", true, "print lidar data on stdout")
@@ -37,20 +37,16 @@ func init() {
 func main() {
 	writer := bufio.NewWriter(os.Stdout)
 
-	options := serial.OpenOptions{
-		PortName:        portName,
-		BaudRate:        baudRate,
-		DataBits:        8,
-		StopBits:        1,
-		MinimumReadSize: 1,
-		ParityMode:      0, // no parity
+	config := &serial.Config{
+		Name: portName,
+		Baud: baudRate,
 	}
-	port, err := serial.Open(options)
+	port, err := serial.OpenPort(config)
 	if err != nil {
-		log.Fatalf("failed to open port %s: %v\n", portName, err)
+		log.Println("cannot open port:", err)
+		return
 	}
 	defer port.Close()
-	log.Println("connection established")
 
 	// Sources of data initialization
 	accel := AccelData{}
@@ -69,8 +65,9 @@ func main() {
 	for {
 		// Servo: Sending data
 		servo.move()
-		inputByte := uint16(servo.positon)
-		f := frames.EncodeFrame(inputByte)
+		inputByte := servo.positon
+		data := []byte{byte(inputByte >> 8), byte(inputByte)} // TODO: Check whether correct
+		f := frames.Create([]byte(frames.LidarHeader), data)
 		for i, currentByte := range f {
 			if _, err := port.Write([]byte{currentByte}); err != nil {
 				log.Fatalf("%d byte: failed to write it to port: %v\n", i, err)
@@ -79,24 +76,15 @@ func main() {
 		servo.timept = time.Now()
 
 		// Accelerometer: Reading data
-		buf := make([]byte, 32)
-		_, err = port.Read(buf)
-		if err != nil {
-			log.Println("failed to read from port:", err)
-			continue
+		frame := make(frames.Frame, 18)
+		if err := readAceelFrame(port, frame, 'L'); err != nil {
+			log.Printf("error: %s\n", err)
 		}
 
-		// TODO: Clever Buffer -> Frame conversion
-		frame := frames.Frame{
-			Header:   frames.FrameHeader(buf[0:3]),
-			Data:     buf[3:15],
-			Checksum: buf[16],
-		}
-
-		// Accelerometer
-		accel, err = processAccelFrame(&frame)
+		// Accelerometer: Processing data
+		accel, err = processAccelFrame(frame)
 		if err != nil {
-			// FIXME: Handle error
+			log.Println("cannot process frame")
 			continue
 		}
 

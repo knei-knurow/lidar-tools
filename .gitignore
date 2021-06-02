@@ -15,6 +15,7 @@
 /transmitter.exe
 /servoctl
 /sync
+/scan-dummy
 
 # other
 /datasets
