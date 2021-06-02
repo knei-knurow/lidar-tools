@@ -5,7 +5,6 @@ package frames
 import (
 	"bytes"
 	"fmt"
-	"strings"
 )
 
 // Standard frame headers. Must be ASCII-only strings.
@@ -19,30 +18,39 @@ const (
 
 // Frame represents a frame that can be e.g sent by USART.
 //
-// Frame starts with an arbitrary-length header (thought it is almost always 2 bytes).
-// After a header comes a plus sign ("+").
+// Frame starts with a header that is always 2 bytes.
+// Header can only contain uppercase ASCII letters.
+// Directly afer a header comes length byte which describes how long is data.
+// After the length byte comes a plus sign ("+").
 // Then comes an arbitrary-length data.
 // Data is terminated with a hash sign ("#").
 // The last byte is a simple 8-bit CRC checksum.
 //
 // Example frame (H = header byte, D = data byte, C = CRC byte):
 //
-// HH+DDDDD#C
 type Frame []byte
 
-// Header returns frame's header. It is usually 2 bytes.
-// FIXME: https://github.com/knei-knurow/lidar-tools/pull/6#issuecomment-852434570
+// HH4+DDDDD#C
+// LD++DDDDD#C
+
+// Header returns frame's header. It is always 2 bytes.
 func (f Frame) Header() []byte {
-	end := strings.IndexByte(string(f), '+')
-	return f[0:end]
+	return f[:2]
+}
+
+// LenData returns the length of frame's data in bytes.
+func (f Frame) LenData() int {
+	return int(f[2])
 }
 
 // Data returns frame's data part from the first byte after a plus sign ("+") up
 // to the antepenultimate (last but one - 1) byte.
-// FIXME:  https://github.com/knei-knurow/lidar-tools/pull/6#issuecomment-852434570
 func (f Frame) Data() []byte {
-	start := strings.IndexByte(string(f), '+')
-	return f[start+1 : len(f)-2]
+	headerLength := len(f.Header())
+	begin := headerLength + 2 // example: LD4+DDDD : we want to start from D (so index 4)
+	end := begin + f.LenData()
+
+	return f[begin:end]
 }
 
 // Checksum returns frame's last byte - a simple CRC checksum.
@@ -53,12 +61,14 @@ func (f Frame) Checksum() byte {
 // Create creates a new frame.
 // The frame starts with header and contains data.
 // It also calculates the checksum using frames.CalculateChecksum.
+// Data size must not overflow byte.
 func Create(header []byte, data []byte) (frame Frame) {
-	frame = make(Frame, len(header)+1+len(data)+2)
+	frame = make(Frame, len(header)+1+1+len(data)+2)
 
 	copy(frame[:len(header)], header)
-	frame[len(header)] = '+'
-	copy(frame[len(header)+1:len(frame)-2], data)
+	frame[len(header)] = byte(len(data))
+	frame[len(header)+1] = '+'
+	copy(frame[len(header)+2:len(frame)-2], data)
 	frame[len(frame)-2] = '#'
 	frame[len(frame)-1] = CalculateChecksum(frame)
 
@@ -66,12 +76,13 @@ func Create(header []byte, data []byte) (frame Frame) {
 }
 
 // Assemble creates a frame from already available values.
-func Assemble(header []byte, data []byte, checksum byte) (frame Frame) {
-	frame = make(Frame, len(header)+1+len(data)+2)
+func Assemble(header []byte, length byte, data []byte, checksum byte) (frame Frame) {
+	frame = make(Frame, len(header)+1+1+len(data)+2)
 
 	copy(frame[:len(header)], header)
-	frame[len(header)] = '+'
-	copy(frame[len(header)+1:len(frame)-2], data)
+	frame[len(header)] = length
+	frame[len(header)+1] = '+'
+	copy(frame[len(header)+2:len(frame)-2], data)
 	frame[len(frame)-2] = '#'
 	frame[len(frame)-1] = checksum
 
@@ -87,6 +98,7 @@ func Assemble(header []byte, data []byte, checksum byte) (frame Frame) {
 // - have 1 or more hash signs ("#")
 //
 // - its checksum must be correct
+// FIXME: does not work correctly anymore
 func Verify(frame Frame) bool {
 	if bytes.Count(frame, []byte{'+'}) >= 1 {
 		return false
