@@ -97,3 +97,16 @@ func TestAssemble(t *testing.T) {
 		})
 	}
 }
+
+func TestVerify(t *testing.T) {
+	for i, tc := range testCases {
+		testName := fmt.Sprintf("test %d", i)
+		t.Run(testName, func(t *testing.T) {
+			gotFrame := frames.Create(tc.inputHeader, tc.inputData)
+
+			if !frames.Verify(gotFrame) {
+				t.Errorf("frame verification failed")
+			}
+		})
+	}
+}

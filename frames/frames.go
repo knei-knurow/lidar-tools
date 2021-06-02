@@ -3,7 +3,6 @@
 package frames
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -93,18 +92,20 @@ func Assemble(header []byte, length byte, data []byte, checksum byte) (frame Fra
 //
 // The frame has to:
 //
-// - have 1 or more plus signs ("+")
+// - start with 2 byte header ASCII-only uppercase header
+// - have a plus sign ("+") 4th position
 //
-// - have 1 or more hash signs ("#")
+// - have a hash sign ("#") at penultimate position
 //
 // - its checksum must be correct
-// FIXME: does not work correctly anymore
 func Verify(frame Frame) bool {
-	if bytes.Count(frame, []byte{'+'}) >= 1 {
+	// TODO: check if frame[0:2] contains only uppercase ASCII
+
+	if frame[3] != '+' {
 		return false
 	}
 
-	if bytes.Count(frame, []byte{'#'}) >= 1 {
+	if frame[len(frame)-2] != '#' {
 		return false
 	}
 
