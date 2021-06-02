@@ -27,8 +27,6 @@ Programs in this repository:
 
   `$ ./sync --port /dev/tty.usbserial-14220`
 
-  TODO: add more description to `sync`
-
 - **misc/scan-dummy**
   Genereate dummy data to imitate the original lidar-scan output.
 
