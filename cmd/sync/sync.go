@@ -25,7 +25,7 @@ func init() {
 	log.SetPrefix("sync: ")
 
 	flag.StringVar(&portName, "port", "COM9", "serial communication port")
-	flag.IntVar(&baudRate, "baud", 9600, "port baud rate (bps)")
+	flag.IntVar(&baudRate, "baud", 19200, "port baud rate (bps)")
 	flag.BoolVar(&accelOut, "accel", true, "print accelerometer data on stdout")
 	flag.BoolVar(&servoOut, "servo", true, "print set servo position on stdout")
 	flag.BoolVar(&lidarOut, "lidar", true, "print lidar data on stdout")
