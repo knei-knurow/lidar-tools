@@ -58,34 +58,19 @@ func main() {
 		vector:     60,
 		port:       port,
 	}
-	// lidar := Lidar{ // TODO: make it more configurable from command line
-	// 	RPM:  660,
-	// 	Mode: rplidarModeDefault,
-	// 	Args: "-r 660 -m 2",
-	// 	Path: "scan-dummy.exe",
-	// }
+	lidar := Lidar{ // TODO: make it more configurable from command line
+		RPM:  660,
+		Mode: rplidarModeDefault,
+		Args: "-r 660 -m 2",
+		Path: "scan-dummy.exe",
+	}
 
-	// Start lidar loop
-	// go lidar.StartLoop()
-	// go servo.StartLoop(500)
+	go lidar.StartLoop()
+	go servo.StartLoop(500)
 	go accel.StartLoop()
 
-	// Start accelerometer/servo loop
+	// Start printing loop
 	for {
-		// // Accelerometer: Reading data
-		// frame := make(frames.Frame, 18)
-		// if err := readAceelFrame(port, frame, 'L'); err != nil {
-		// 	log.Printf("error: %s\n", err)
-		// }
-
-		// // Accelerometer: Processing data
-		// accel, err = processAccelFrame(frame)
-		// if err != nil {
-		// 	log.Println("cannot process frame")
-		// 	continue
-		// }
-
-		// Write stdout
 		if accelOut {
 			writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n", accel.data.timept.UnixNano(),
 				accel.data.xAccel, accel.data.yAccel, accel.data.zAccel,
