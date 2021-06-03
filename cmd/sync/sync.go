@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/knei-knurow/lidar-tools/frames"
 	"github.com/tarm/serial"
 )
 
@@ -48,7 +47,10 @@ func main() {
 	defer port.Close()
 
 	// Sources of data initialization
-	accel := AccelData{}
+	accel := Accel{
+		calibration: accelCalib,
+		port:        port,
+	}
 	servo := Servo{
 		positon:    3600,
 		positonMin: 1600,
@@ -65,28 +67,29 @@ func main() {
 
 	// Start lidar loop
 	// go lidar.StartLoop()
-	go servo.StartLoop(500)
+	// go servo.StartLoop(500)
+	go accel.StartLoop()
 
 	// Start accelerometer/servo loop
 	for {
-		// Accelerometer: Reading data
-		frame := make(frames.Frame, 18)
-		if err := readAceelFrame(port, frame, 'L'); err != nil {
-			log.Printf("error: %s\n", err)
-		}
+		// // Accelerometer: Reading data
+		// frame := make(frames.Frame, 18)
+		// if err := readAceelFrame(port, frame, 'L'); err != nil {
+		// 	log.Printf("error: %s\n", err)
+		// }
 
-		// Accelerometer: Processing data
-		accel, err = processAccelFrame(frame)
-		if err != nil {
-			log.Println("cannot process frame")
-			continue
-		}
+		// // Accelerometer: Processing data
+		// accel, err = processAccelFrame(frame)
+		// if err != nil {
+		// 	log.Println("cannot process frame")
+		// 	continue
+		// }
 
 		// Write stdout
 		if accelOut {
-			writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n", accel.timept.UnixNano(),
-				accel.xAccel, accel.yAccel, accel.zAccel,
-				accel.xGyro, accel.yGyro, accel.zGyro))
+			writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n", accel.data.timept.UnixNano(),
+				accel.data.xAccel, accel.data.yAccel, accel.data.zAccel,
+				accel.data.xGyro, accel.data.yGyro, accel.data.zGyro))
 		}
 		if servoOut {
 			writer.WriteString(fmt.Sprintf("S %d %d\n", servo.timept.UnixNano(), servo.positon))
