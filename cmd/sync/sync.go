@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/knei-knurow/lidar-tools/frames"
 	"github.com/tarm/serial"
@@ -50,31 +49,26 @@ func main() {
 
 	// Sources of data initialization
 	accel := AccelData{}
-	servo := Servo{positon: 3600, positonMin: 1600, positonMax: 4400, vector: 60}
-	lidar := Lidar{ // TODO: make it more configurable from command line
-		RPM:  660,
-		Mode: rplidarModeDefault,
-		Args: "-r 660 -m 2",
-		Path: "scan-dummy.exe",
+	servo := Servo{
+		positon:    3600,
+		positonMin: 1600,
+		positonMax: 4400,
+		vector:     60,
+		port:       port,
 	}
+	// lidar := Lidar{ // TODO: make it more configurable from command line
+	// 	RPM:  660,
+	// 	Mode: rplidarModeDefault,
+	// 	Args: "-r 660 -m 2",
+	// 	Path: "scan-dummy.exe",
+	// }
 
 	// Start lidar loop
-	go lidar.StartLoop()
+	// go lidar.StartLoop()
+	go servo.StartLoop(500)
 
 	// Start accelerometer/servo loop
 	for {
-		// Servo: Sending data
-		servo.move()
-		inputByte := servo.positon
-		data := []byte{byte(inputByte >> 8), byte(inputByte)} // TODO: Check whether correct
-		f := frames.Create([]byte(frames.LidarHeader), data)
-		for i, currentByte := range f {
-			if _, err := port.Write([]byte{currentByte}); err != nil {
-				log.Fatalf("%d byte: failed to write it to port: %v\n", i, err)
-			}
-		}
-		servo.timept = time.Now()
-
 		// Accelerometer: Reading data
 		frame := make(frames.Frame, 18)
 		if err := readAceelFrame(port, frame, 'L'); err != nil {
@@ -99,4 +93,21 @@ func main() {
 		}
 		writer.Flush()
 	}
+
+	/*
+		go Servo.StartLoop(servoChan)
+		go Accel.StartLoop(accelChan)
+		go Lidar.StartLoop(lidarChan)
+
+		for {
+			select {
+			case servoData := <-servoChan:
+				servoBuffer.append(servoData)
+			case accelData := <-accelChan:
+				accelBuffer.append(accelData)
+			case lidarData := <-lidarChan:
+				lidarBuffer.append(lidarData)
+			}
+		}
+	*/
 }

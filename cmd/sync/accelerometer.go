@@ -20,6 +20,7 @@ type AccelData struct {
 
 var (
 	accelCalib = AccelData{
+		// POSSIBLE ERROR SOURCE: Values differ depending on the temperature
 		xAccel: -844,
 		yAccel: 78,
 		zAccel: 1542,
@@ -78,13 +79,13 @@ func processAccelFrame(frame frames.Frame) (AccelData, error) {
 
 	// TODO: make sure the lines below work correctly
 	fdata := frame.Data()
+	data.timept = timept // POSSIBLE ERROR SOURCE: Time of data receipt
 	data.xAccel = mergeBytes(fdata[0], fdata[1])
 	data.yAccel = mergeBytes(fdata[2], fdata[3])
 	data.zAccel = mergeBytes(fdata[4], fdata[5])
 	data.xGyro = mergeBytes(fdata[6], fdata[7])
 	data.yGyro = mergeBytes(fdata[8], fdata[9])
 	data.zGyro = mergeBytes(fdata[10], fdata[11])
-	data.timept = timept
 
 	calibrate(&data, &accelCalib)
 	return data, nil
