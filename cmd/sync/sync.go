@@ -52,11 +52,12 @@ func main() {
 		port:        port,
 	}
 	servo := Servo{
-		positon:    3600,
+		data:       ServoData{positon: 1600},
 		positonMin: 1600,
 		positonMax: 3800,
 		vector:     25,
 		port:       port,
+		delayMs:    20,
 	}
 	lidar := Lidar{ // TODO: make it more configurable from command line
 		RPM:  660,
@@ -65,21 +66,39 @@ func main() {
 		Path: "scan-dummy.exe",
 	}
 
+	// Create communication channels
+	// lidarChan := make(chan LidarCloud)
+	servoChan := make(chan ServoData)
+	// accelChan := make(chan AccelData)
+
+	// Start goroutines
 	go lidar.StartLoop()
-	go servo.StartLoop(50)
+	go servo.StartLoop(servoChan)
 	go accel.StartLoop()
 
-	// Start printing loop
+	// Main loop
 	for {
+		select {
+		case servoData := <-servoChan:
+			if servoOut {
+				writer.WriteString(fmt.Sprintf("S %d %d\n", servoData.timept.UnixNano(), servoData.positon))
+			}
+			// servoBuffer.append(servoData)
+			//case accelData := <-accelChan:
+			// accelBuffer.append(accelData)
+			//case lidarData := <-lidarChan:
+			// lidarBuffer.append(lidarData)
+		}
+		writer.Flush()
+	}
+
+	for {
+
 		if accelOut {
 			writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n", accel.data.timept.UnixNano(),
 				accel.data.xAccel, accel.data.yAccel, accel.data.zAccel,
 				accel.data.xGyro, accel.data.yGyro, accel.data.zGyro))
 		}
-		if servoOut {
-			writer.WriteString(fmt.Sprintf("S %d %d\n", servo.timept.UnixNano(), servo.positon))
-		}
-		writer.Flush()
 	}
 
 	/*
