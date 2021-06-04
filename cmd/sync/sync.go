@@ -54,8 +54,8 @@ func main() {
 	servo := Servo{
 		positon:    3600,
 		positonMin: 1600,
-		positonMax: 4400,
-		vector:     60,
+		positonMax: 3800,
+		vector:     25,
 		port:       port,
 	}
 	lidar := Lidar{ // TODO: make it more configurable from command line
@@ -66,7 +66,7 @@ func main() {
 	}
 
 	go lidar.StartLoop()
-	go servo.StartLoop(500)
+	go servo.StartLoop(50)
 	go accel.StartLoop()
 
 	// Start printing loop
