@@ -38,9 +38,10 @@ var (
 )
 
 // StartLoop starts the accelerometer main loop
-func (accel *Accel) StartLoop() {
+func (accel *Accel) StartLoop(channel chan AccelData) {
 	for {
 		accel.ReadData()
+		channel <- accel.data
 	}
 }
 

@@ -69,12 +69,12 @@ func main() {
 	// Create communication channels
 	// lidarChan := make(chan LidarCloud)
 	servoChan := make(chan ServoData)
-	// accelChan := make(chan AccelData)
+	accelChan := make(chan AccelData)
 
 	// Start goroutines
 	go lidar.StartLoop()
 	go servo.StartLoop(servoChan)
-	go accel.StartLoop()
+	go accel.StartLoop(accelChan)
 
 	// Main loop
 	for {
@@ -84,37 +84,16 @@ func main() {
 				writer.WriteString(fmt.Sprintf("S %d %d\n", servoData.timept.UnixNano(), servoData.positon))
 			}
 			// servoBuffer.append(servoData)
-			//case accelData := <-accelChan:
+		case accelData := <-accelChan:
+			if accelOut {
+				writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n", accelData.timept.UnixNano(),
+					accelData.xAccel, accelData.yAccel, accelData.zAccel,
+					accelData.xGyro, accelData.yGyro, accelData.zGyro))
+			}
 			// accelBuffer.append(accelData)
 			//case lidarData := <-lidarChan:
 			// lidarBuffer.append(lidarData)
 		}
 		writer.Flush()
 	}
-
-	for {
-
-		if accelOut {
-			writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n", accel.data.timept.UnixNano(),
-				accel.data.xAccel, accel.data.yAccel, accel.data.zAccel,
-				accel.data.xGyro, accel.data.yGyro, accel.data.zGyro))
-		}
-	}
-
-	/*
-		go Servo.StartLoop(servoChan)
-		go Accel.StartLoop(accelChan)
-		go Lidar.StartLoop(lidarChan)
-
-		for {
-			select {
-			case servoData := <-servoChan:
-				servoBuffer.append(servoData)
-			case accelData := <-accelChan:
-				accelBuffer.append(accelData)
-			case lidarData := <-lidarChan:
-				lidarBuffer.append(lidarData)
-			}
-		}
-	*/
 }
