@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/tarm/serial"
 )
@@ -61,14 +62,20 @@ func main() {
 		calibration: accelCalib,
 		port:        port,
 	}
+
 	servo := Servo{
-		data:       ServoData{positon: 1600},
-		positonMin: 1600,
-		positonMax: 3800,
+		data:       ServoData{positon: servoStartPos},
+		positonMin: servoMinPos,
+		positonMax: servoMaxPos,
 		vector:     50,
 		port:       port,
 		delayMs:    60,
 	}
+	log.Println("setting the servo to the start position")
+	servo.SetPosition(servoStartPos)
+	log.Println("waiting for the servo")
+	time.Sleep(time.Second) // to be sure that the servo is on the right position
+
 	lidar := Lidar{ // TODO: make it more configurable from command line
 		RPM:  lidarRPM,
 		Mode: lidarMode,

@@ -9,6 +9,12 @@ import (
 	"github.com/knei-knurow/lidar-tools/frames"
 )
 
+const (
+	servoMinPos   = 2000
+	servoStartPos = 2500
+	servoMaxPos   = 3000
+)
+
 type ServoData struct {
 	positon uint16    // given, not real
 	timept  time.Time // time of sending a new position to the servo
@@ -51,6 +57,13 @@ func (servo *Servo) SendData() (err error) {
 	// not actual servo set time
 	servo.data.timept = time.Now()
 	return nil
+}
+
+// SetPosition sends an order with new position to the servo. The value is not checked
+// by this function but might be checked by AVR software.
+func (servo *Servo) SetPosition(pos uint16) (err error) {
+	servo.data.positon = pos
+	return servo.SendData()
 }
 
 // StartLoop starts a loop responsible for controlling the servo position
