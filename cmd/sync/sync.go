@@ -81,6 +81,11 @@ func main() {
 	servoChan := make(chan ServoData)
 	accelChan := make(chan AccelData)
 
+	// Create data buffers
+	accelBuffer := NewAccelDataBuffer(32)
+	servoBuffer := NewServoDataBuffer(32)
+	var lidarBuffer *LidarCloud
+
 	// Start goroutines
 	go lidar.StartLoop(lidarChan)
 	go servo.StartLoop(servoChan)
@@ -93,20 +98,22 @@ func main() {
 			if lidarOut {
 				writer.WriteString(fmt.Sprintf("L %d %d\n", lidarData.ID, lidarData.Size))
 			}
+			lidarBuffer = lidarData
 		case servoData := <-servoChan:
 			if servoOut {
 				writer.WriteString(fmt.Sprintf("S %d %d\n", servoData.timept.UnixNano(), servoData.positon))
 			}
+			servoBuffer.Append(servoData)
 		case accelData := <-accelChan:
 			if accelOut {
 				writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n", accelData.timept.UnixNano(),
 					accelData.xAccel, accelData.yAccel, accelData.zAccel,
 					accelData.xGyro, accelData.yGyro, accelData.zGyro))
 			}
-			// accelBuffer.append(accelData)
-			//case lidarData := <-lidarChan:
-			// lidarBuffer.append(lidarData)
+			accelBuffer.Append(accelData)
 		}
 		writer.Flush()
+
+		mergerLidarServoV1(lidarBuffer, &servoBuffer, &accelBuffer)
 	}
 }
