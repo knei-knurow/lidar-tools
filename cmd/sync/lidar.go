@@ -27,7 +27,6 @@ const (
 type Point struct {
 	Angle float32 // Angle in degrees.
 	Dist  float32 // Distance in millimeters.
-	// pointpt time.Time // estimated measurement time point
 }
 
 // LidarCloud is one full (360deg) lidar point cloud.
@@ -43,17 +42,18 @@ type LidarCloud struct {
 
 // Lidar represents general lidar parameters.
 type Lidar struct {
-	TimeInit          time.Time     // Time of the first starting line read (line starting with '!').
-	RPM               int           // Declared RPM (actual may differ).
-	Mode              int           // rplidar scan mode.
-	Args              []string      // lidar-scan process argv.
-	Path              string        // Path to lidar-scan executable.
-	Stdout            io.ReadCloser // lidar-scan stdout.
-	Stderr            io.ReadCloser // lidar-scan stderr.
-	process           *exec.Cmd     // lidar-scan process.
-	running           bool          // Whether lidar-scan is currently scanning.
-	nextCloudCount    int
-	nextCloudTimeDiff int
+	TimeInit           time.Time     // Time of the first starting line read (line starting with '!').
+	RPM                int           // Declared RPM (actual may differ).
+	Mode               int           // rplidar scan mode.
+	Args               []string      // lidar-scan process argv.
+	Path               string        // Path to lidar-scan executable.
+	Stdout             io.ReadCloser // lidar-scan stdout.
+	Stderr             io.ReadCloser // lidar-scan stderr.
+	process            *exec.Cmd     // lidar-scan process.
+	running            bool          // Whether lidar-scan is currently scanning.
+	nextCloudCount     int
+	nextCloudTimeDiff  int
+	nextCloudTimeBegin time.Time
 }
 
 // StartProcess starts the lidar-scan process.
@@ -125,8 +125,10 @@ func (lidar *Lidar) StartLoop(channel chan *LidarCloud) (err error) {
 	for {
 		// create new cloud every time to pass the pointer via channel and avoid data race
 		cloud := LidarCloud{
-			ID:       lidar.nextCloudCount + 1,
-			TimeDiff: lidar.nextCloudTimeDiff}
+			ID:        lidar.nextCloudCount + 1,
+			TimeDiff:  lidar.nextCloudTimeDiff,
+			TimeBegin: lidar.nextCloudTimeBegin, // POSSIBLE ERROR SOURCE: using milliseconds by lidar-scan
+			timeEnd:   lidar.nextCloudTimeBegin.Add(time.Millisecond * time.Duration(lidar.nextCloudTimeDiff))}
 
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -156,6 +158,7 @@ func (lidar *Lidar) ProcessLine(line string, cloud *LidarCloud) (err error) {
 	switch line[0] {
 	case '#':
 	case '!':
+		lidar.nextCloudTimeBegin = time.Now() // POSSIBLE ERROR SOURCE: using time of data receive
 		if _, err := fmt.Sscanf(line, "! %d %d", &lidar.nextCloudCount, &lidar.nextCloudTimeDiff); err != nil {
 			return errors.New("invalid starting line")
 		}

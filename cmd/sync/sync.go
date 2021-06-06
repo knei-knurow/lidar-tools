@@ -67,7 +67,7 @@ func main() {
 		positonMax: 3800,
 		vector:     50,
 		port:       port,
-		delayMs:    100,
+		delayMs:    60,
 	}
 	lidar := Lidar{ // TODO: make it more configurable from command line
 		RPM:  lidarRPM,
@@ -114,6 +114,7 @@ func main() {
 		}
 		writer.Flush()
 
+		//buffersPrint(lidarBuffer, &servoBuffer, &accelBuffer)
 		mergerLidarServoV1(lidarBuffer, &servoBuffer, &accelBuffer)
 	}
 }
