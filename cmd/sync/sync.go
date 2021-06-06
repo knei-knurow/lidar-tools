@@ -8,27 +8,36 @@ import (
 	"os"
 	"time"
 
-	"github.com/knei-knurow/lidar-tools/frames"
 	"github.com/tarm/serial"
 )
 
 var (
-	portName string
-	baudRate int
-	accelOut bool
-	servoOut bool
-	lidarOut bool
+	avrPortName   string
+	avrBaudRate   int
+	lidarPortName string
+	lidarMode     int
+	lidarRPM      int
+	lidarExe      string
+	accelOut      bool
+	servoOut      bool
+	lidarOut      bool
 )
 
 func init() {
 	log.SetFlags(0)
 	log.SetPrefix("sync: ")
 
-	flag.StringVar(&portName, "port", "COM9", "serial communication port")
-	flag.IntVar(&baudRate, "baud", 9600, "port baud rate (bps)")
-	flag.BoolVar(&accelOut, "accel", true, "print accelerometer data on stdout")
-	flag.BoolVar(&servoOut, "servo", true, "print set servo position on stdout")
-	flag.BoolVar(&lidarOut, "lidar", true, "print lidar data on stdout")
+	flag.StringVar(&avrPortName, "avrport", "COM9", "AVR serial communication port")
+	flag.IntVar(&avrBaudRate, "avrbaud", 19200, "port baud rate (bps)")
+
+	flag.StringVar(&lidarExe, "lidarexe", "lidar.exe", "lidar-scan executable")
+	flag.StringVar(&lidarPortName, "lidarport", "COM4", "RPLIDAR serial communication port")
+	flag.IntVar(&lidarMode, "lidarmode", rplidarModeDefault, "RPLIDAR mode")
+	flag.IntVar(&lidarRPM, "lidarpm", 660, "RPLIDAR given revolutions per minute")
+
+	flag.BoolVar(&accelOut, "accel", false, "print accelerometer data on stdout")
+	flag.BoolVar(&servoOut, "servo", false, "print set servo position on stdout")
+	flag.BoolVar(&lidarOut, "lidar", false, "print lidar data on stdout")
 
 	flag.Parse()
 	log.Println("starting...")
@@ -38,8 +47,8 @@ func main() {
 	writer := bufio.NewWriter(os.Stdout)
 
 	config := &serial.Config{
-		Name: portName,
-		Baud: baudRate,
+		Name: avrPortName,
+		Baud: avrBaudRate,
 	}
 	port, err := serial.OpenPort(config)
 	if err != nil {
@@ -49,54 +58,69 @@ func main() {
 	defer port.Close()
 
 	// Sources of data initialization
-	accel := AccelData{}
-	servo := Servo{positon: 3600, positonMin: 1600, positonMax: 4400, vector: 60}
-	lidar := Lidar{ // TODO: make it more configurable from command line
-		RPM:  660,
-		Mode: rplidarModeDefault,
-		Args: "-r 660 -m 2",
-		Path: "scan-dummy.exe",
+	accel := Accel{
+		calibration: accelCalib,
+		port:        port,
 	}
 
-	// Start lidar loop
-	go lidar.StartLoop()
+	servo := Servo{
+		data:       ServoData{positon: servoStartPos},
+		positonMin: servoMinPos,
+		positonMax: servoMaxPos,
+		vector:     50,
+		port:       port,
+		delayMs:    60,
+	}
+	log.Println("setting the servo to the start position")
+	servo.SetPosition(servoStartPos)
+	log.Println("waiting for the servo")
+	time.Sleep(time.Second) // to be sure that the servo is on the right position
 
-	// Start accelerometer/servo loop
+	lidar := Lidar{ // TODO: make it more configurable from command line
+		RPM:  lidarRPM,
+		Mode: lidarMode,
+		Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
+		Path: lidarExe, // TODO: Check if exists
+	}
+
+	// Create communication channels
+	lidarChan := make(chan *LidarCloud) // LidarCloud is >64kB so it cannot be directly passed by a channel
+	servoChan := make(chan ServoData)
+	accelChan := make(chan AccelData)
+
+	// Create data buffers
+	accelBuffer := NewAccelDataBuffer(32)
+	servoBuffer := NewServoDataBuffer(32)
+	var lidarBuffer *LidarCloud
+
+	// Start goroutines
+	go lidar.StartLoop(lidarChan)
+	go servo.StartLoop(servoChan)
+	go accel.StartLoop(accelChan)
+
+	// Main loop
 	for {
-		// Servo: Sending data
-		servo.move()
-		inputByte := servo.positon
-		data := []byte{byte(inputByte >> 8), byte(inputByte)} // TODO: Check whether correct
-		f := frames.Create([]byte(frames.LidarHeader), data)
-		for i, currentByte := range f {
-			if _, err := port.Write([]byte{currentByte}); err != nil {
-				log.Fatalf("%d byte: failed to write it to port: %v\n", i, err)
+		select {
+		case lidarData := <-lidarChan:
+			if lidarOut {
+				writer.WriteString(fmt.Sprintf("L %d %d\n", lidarData.ID, lidarData.Size))
 			}
-		}
-		servo.timept = time.Now()
-
-		// Accelerometer: Reading data
-		frame := make(frames.Frame, 18)
-		if err := readAceelFrame(port, frame, 'L'); err != nil {
-			log.Printf("error: %s\n", err)
-		}
-
-		// Accelerometer: Processing data
-		accel, err = processAccelFrame(frame)
-		if err != nil {
-			log.Println("cannot process frame")
-			continue
-		}
-
-		// Write stdout
-		if accelOut {
-			writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n", accel.timept.UnixNano(),
-				accel.xAccel, accel.yAccel, accel.zAccel,
-				accel.xGyro, accel.yGyro, accel.zGyro))
-		}
-		if servoOut {
-			writer.WriteString(fmt.Sprintf("S %d %d\n", servo.timept.UnixNano(), servo.positon))
+			lidarBuffer = lidarData
+		case servoData := <-servoChan:
+			if servoOut {
+				writer.WriteString(fmt.Sprintf("S %d %d\n", servoData.timept.UnixNano(), servoData.positon))
+			}
+			servoBuffer.Append(servoData)
+		case accelData := <-accelChan:
+			if accelOut {
+				writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n", accelData.timept.UnixNano(),
+					accelData.xAccel, accelData.yAccel, accelData.zAccel,
+					accelData.xGyro, accelData.yGyro, accelData.zGyro))
+			}
+			accelBuffer.Append(accelData)
 		}
 		writer.Flush()
+
+		go mergerLidarServoV1(lidarBuffer, &servoBuffer, true)
 	}
 }
