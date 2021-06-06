@@ -1,6 +1,10 @@
 package main
 
-import "log"
+import (
+	"fmt"
+	"log"
+	"time"
+)
 
 // PointSph3 is 3-dimensional point in spherical coordinate system
 type PointSph3 struct {
@@ -41,7 +45,33 @@ func buffersPrint(lidarBuff *LidarCloud, servoBuff *ServoDataBuffer, accelBuff *
 
 }
 
-func mergerLidarServoV1(lidarBuff *LidarCloud, servoBuff *ServoDataBuffer, accelBuff *AccelDataBuffer) (cloud []PointSph3, err error) {
+func mergerLidarServoV1(lidarBuff *LidarCloud, servoBuff *ServoDataBuffer, print bool) (cloud []PointSph3) {
+	if lidarBuff == nil {
+		return cloud
+	}
 
-	return cloud, nil
+	s, _ := servoBuff.Get(0)
+	servoAngle := float32(s.positon)
+
+	cloud = make([]PointSph3, lidarBuff.Size)
+	for i := 0; i < int(lidarBuff.Size); i++ {
+		cloud[i] = PointSph3{
+			lidarBuff.Data[i].Angle,
+			servoAngle,
+			lidarBuff.Data[i].Dist,
+		}
+
+		if print && lidarBuff.Data[i].Dist != 0 {
+			fmt.Println(lidarBuff.Data[i].Angle, servoAngle, lidarBuff.Data[i].Dist)
+		}
+	}
+
+	return cloud
+}
+
+func isTimeBetween(v time.Time, start time.Time, end time.Time) bool {
+	if (v.After(start) && v.Before(end)) || v == start || v == end {
+		return true
+	}
+	return false
 }

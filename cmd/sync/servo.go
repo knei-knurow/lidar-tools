@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	servoMinPos   = 2000
-	servoStartPos = 2500
-	servoMaxPos   = 3000
+	servoMinPos    = 1000
+	servoStartPos  = 2500
+	servoMaxPos    = 3000
+	servoUnitToDeg = 0.1 // 1 servo position unit = servoUnitToDeg * 1deg
 )
 
 type ServoData struct {

@@ -35,9 +35,9 @@ func init() {
 	flag.IntVar(&lidarMode, "lidarmode", rplidarModeDefault, "RPLIDAR mode")
 	flag.IntVar(&lidarRPM, "lidarpm", 660, "RPLIDAR given revolutions per minute")
 
-	flag.BoolVar(&accelOut, "accel", true, "print accelerometer data on stdout")
-	flag.BoolVar(&servoOut, "servo", true, "print set servo position on stdout")
-	flag.BoolVar(&lidarOut, "lidar", true, "print lidar data on stdout")
+	flag.BoolVar(&accelOut, "accel", false, "print accelerometer data on stdout")
+	flag.BoolVar(&servoOut, "servo", false, "print set servo position on stdout")
+	flag.BoolVar(&lidarOut, "lidar", false, "print lidar data on stdout")
 
 	flag.Parse()
 	log.Println("starting...")
@@ -121,7 +121,6 @@ func main() {
 		}
 		writer.Flush()
 
-		//buffersPrint(lidarBuffer, &servoBuffer, &accelBuffer)
-		mergerLidarServoV1(lidarBuffer, &servoBuffer, &accelBuffer)
+		go mergerLidarServoV1(lidarBuffer, &servoBuffer, true)
 	}
 }
