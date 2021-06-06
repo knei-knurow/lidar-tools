@@ -16,6 +16,7 @@ var (
 	lidarPortName string
 	lidarMode     int
 	lidarRPM      int
+	lidarExe      string
 	accelOut      bool
 	servoOut      bool
 	lidarOut      bool
@@ -28,6 +29,7 @@ func init() {
 	flag.StringVar(&avrPortName, "avrport", "COM9", "AVR serial communication port")
 	flag.IntVar(&avrBaudRate, "avrbaud", 19200, "port baud rate (bps)")
 
+	flag.StringVar(&lidarExe, "lidarexe", "lidar.exe", "lidar-scan executable")
 	flag.StringVar(&lidarPortName, "lidarport", "COM4", "RPLIDAR serial communication port")
 	flag.IntVar(&lidarMode, "lidarmode", rplidarModeDefault, "RPLIDAR mode")
 	flag.IntVar(&lidarRPM, "lidarpm", 660, "RPLIDAR given revolutions per minute")
@@ -71,27 +73,30 @@ func main() {
 		RPM:  lidarRPM,
 		Mode: lidarMode,
 		Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
-		Path: "lidar.exe",
+		Path: lidarExe, // TODO: Check if exists
 	}
 
 	// Create communication channels
-	// lidarChan := make(chan LidarCloud)
+	lidarChan := make(chan *LidarCloud) // LidarCloud is >64kB so it cannot be directly passed by a channel
 	servoChan := make(chan ServoData)
 	accelChan := make(chan AccelData)
 
 	// Start goroutines
-	go lidar.StartLoop()
+	go lidar.StartLoop(lidarChan)
 	go servo.StartLoop(servoChan)
 	go accel.StartLoop(accelChan)
 
 	// Main loop
 	for {
 		select {
+		case lidarData := <-lidarChan:
+			if lidarOut {
+				writer.WriteString(fmt.Sprintf("L %d %d\n", lidarData.ID, lidarData.Size))
+			}
 		case servoData := <-servoChan:
 			if servoOut {
 				writer.WriteString(fmt.Sprintf("S %d %d\n", servoData.timept.UnixNano(), servoData.positon))
 			}
-			// servoBuffer.append(servoData)
 		case accelData := <-accelChan:
 			if accelOut {
 				writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n", accelData.timept.UnixNano(),

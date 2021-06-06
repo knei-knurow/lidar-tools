@@ -38,19 +38,22 @@ type LidarCloud struct {
 	timeEnd   time.Time               // timeBegin increased by timeDiff milliseconds
 	Data      [lidarMaxDataSize]Point // Measurements data.
 	Size      uint                    // Number of used points in Data.
+	Ready     bool
 }
 
 // Lidar represents general lidar parameters.
 type Lidar struct {
-	TimeInit time.Time     // Time of the first starting line read (line starting with '!').
-	RPM      int           // Declared RPM (actual may differ).
-	Mode     int           // rplidar scan mode.
-	Args     []string      // lidar-scan process argv.
-	Path     string        // Path to lidar-scan executable.
-	Stdout   io.ReadCloser // lidar-scan stdout.
-	Stderr   io.ReadCloser // lidar-scan stderr.
-	process  *exec.Cmd     // lidar-scan process.
-	running  bool          // Whether lidar-scan is currently scanning.
+	TimeInit          time.Time     // Time of the first starting line read (line starting with '!').
+	RPM               int           // Declared RPM (actual may differ).
+	Mode              int           // rplidar scan mode.
+	Args              []string      // lidar-scan process argv.
+	Path              string        // Path to lidar-scan executable.
+	Stdout            io.ReadCloser // lidar-scan stdout.
+	Stderr            io.ReadCloser // lidar-scan stderr.
+	process           *exec.Cmd     // lidar-scan process.
+	running           bool          // Whether lidar-scan is currently scanning.
+	nextCloudCount    int
+	nextCloudTimeDiff int
 }
 
 // StartProcess starts the lidar-scan process.
@@ -109,33 +112,39 @@ func (lidar *Lidar) KillProcess() (err error) {
 
 // StartLoop starts the lidar-scan process and runs a loop responsible for reading and
 // processing lidar data from redirected lidar-scan's stdout. It is designed to be run in a
-// goroutine.
-//
-// TODO: This loop should take some channels? or other stuff which allows it
-// to communicate with other concurrent goroutines.
-func (lidar *Lidar) StartLoop() (err error) {
+// goroutine. The channel sends pointers to LidarCloud which contains the latest scanned
+// point cloud. The pointers approach is required because LidarCloud is greather than 64kB
+// which is a Go limit.
+func (lidar *Lidar) StartLoop(channel chan *LidarCloud) (err error) {
 	if err := lidar.StartProcess(); err != nil {
 		return fmt.Errorf("start process: %v", err)
 	}
 
-	var cloud LidarCloud
-
 	scanner := bufio.NewScanner(lidar.Stdout)
 	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		line := scanner.Text()
+	for {
+		// create new cloud every time to pass the pointer via channel and avoid data race
+		cloud := LidarCloud{
+			ID:       lidar.nextCloudCount + 1,
+			TimeDiff: lidar.nextCloudTimeDiff}
 
-		if err := lidar.ProcessLine(line, &cloud); err != nil {
-			log.Printf("unable to parse line: %s\n", err)
-			// TODO: buffer overflow error handling (but tbh it never happens)
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			if err := lidar.ProcessLine(line, &cloud); err != nil {
+				log.Printf("unable to parse line: %s\n", err)
+				// TODO: buffer overflow error handling (but tbh it never happens)
+			}
+
+			if cloud.Ready {
+				channel <- &cloud
+				break // in order to create new LidarCloud
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			return err
 		}
 	}
-
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // ProcessLine takes a single line from lidar-scan stdout, processes it, and modifies cloud.
@@ -147,20 +156,10 @@ func (lidar *Lidar) ProcessLine(line string, cloud *LidarCloud) (err error) {
 	switch line[0] {
 	case '#':
 	case '!':
-		var count, timeDiff int
-		if _, err := fmt.Sscanf(line, "! %d %d", &count, &timeDiff); err != nil {
+		if _, err := fmt.Sscanf(line, "! %d %d", &lidar.nextCloudCount, &lidar.nextCloudTimeDiff); err != nil {
 			return errors.New("invalid starting line")
 		}
-
-		// TODO: this line should be printed only if lidarOut variable in sync.go equals true
-		log.Printf("processed new point cloud (id:%d, timediff:%dms, size:%d)\n", cloud.ID, cloud.TimeDiff, cloud.Size)
-
-		*cloud = LidarCloud{
-			ID:        count + 1,
-			TimeBegin: time.Now(),
-			TimeDiff:  timeDiff,
-			timeEnd:   time.Now().Add(time.Millisecond * time.Duration(timeDiff)),
-		}
+		cloud.Ready = true
 	default:
 		var angle, dist float32
 		if _, err := fmt.Sscanf(line, "%f %f", &angle, &dist); err != nil {
