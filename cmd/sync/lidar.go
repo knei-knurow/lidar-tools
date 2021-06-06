@@ -45,7 +45,7 @@ type Lidar struct {
 	TimeInit time.Time     // Time of the first starting line read (line starting with '!').
 	RPM      int           // Declared RPM (actual may differ).
 	Mode     int           // rplidar scan mode.
-	Args     string        // lidar-scan process argv.
+	Args     []string      // lidar-scan process argv.
 	Path     string        // Path to lidar-scan executable.
 	Stdout   io.ReadCloser // lidar-scan stdout.
 	Stderr   io.ReadCloser // lidar-scan stderr.
@@ -56,8 +56,8 @@ type Lidar struct {
 // StartProcess starts the lidar-scan process.
 // It does not check whether it has been already started.
 func (lidar *Lidar) StartProcess() error {
-	lidar.process = exec.Command(lidar.Path, lidar.Args)
-	log.Printf("starting lidar-scan process with args: %s\n", lidar.Args)
+	lidar.process = exec.Command(lidar.Path, lidar.Args...)
+	log.Println("starting lidar-scan process with args:", lidar.Args)
 
 	var err error
 	lidar.Stdout, err = lidar.process.StdoutPipe()
@@ -182,7 +182,7 @@ func (lidar *Lidar) ProcessLine(line string, cloud *LidarCloud) (err error) {
 // while it is running, so this function simply kills the process and starts it again
 // with updated args.
 // Such a solution should be sufficient for most cases.
-func (lidar *Lidar) UpdateProcessArgs(args string) (err error) {
+func (lidar *Lidar) UpdateProcessArgs(args []string) (err error) {
 	log.Println("changing lidar-scan process args")
 	if err := lidar.CloseProcess(); err != nil {
 		return err

@@ -11,19 +11,27 @@ import (
 )
 
 var (
-	portName string
-	baudRate int
-	accelOut bool
-	servoOut bool
-	lidarOut bool
+	avrPortName   string
+	avrBaudRate   int
+	lidarPortName string
+	lidarMode     int
+	lidarRPM      int
+	accelOut      bool
+	servoOut      bool
+	lidarOut      bool
 )
 
 func init() {
 	log.SetFlags(0)
 	log.SetPrefix("sync: ")
 
-	flag.StringVar(&portName, "port", "COM9", "serial communication port")
-	flag.IntVar(&baudRate, "baud", 19200, "port baud rate (bps)")
+	flag.StringVar(&avrPortName, "avrport", "COM9", "AVR serial communication port")
+	flag.IntVar(&avrBaudRate, "avrbaud", 19200, "port baud rate (bps)")
+
+	flag.StringVar(&lidarPortName, "lidarport", "COM4", "RPLIDAR serial communication port")
+	flag.IntVar(&lidarMode, "lidarmode", rplidarModeDefault, "RPLIDAR mode")
+	flag.IntVar(&lidarRPM, "lidarpm", 660, "RPLIDAR given revolutions per minute")
+
 	flag.BoolVar(&accelOut, "accel", true, "print accelerometer data on stdout")
 	flag.BoolVar(&servoOut, "servo", true, "print set servo position on stdout")
 	flag.BoolVar(&lidarOut, "lidar", true, "print lidar data on stdout")
@@ -36,8 +44,8 @@ func main() {
 	writer := bufio.NewWriter(os.Stdout)
 
 	config := &serial.Config{
-		Name: portName,
-		Baud: baudRate,
+		Name: avrPortName,
+		Baud: avrBaudRate,
 	}
 	port, err := serial.OpenPort(config)
 	if err != nil {
@@ -55,15 +63,15 @@ func main() {
 		data:       ServoData{positon: 1600},
 		positonMin: 1600,
 		positonMax: 3800,
-		vector:     25,
+		vector:     50,
 		port:       port,
-		delayMs:    20,
+		delayMs:    100,
 	}
 	lidar := Lidar{ // TODO: make it more configurable from command line
-		RPM:  660,
-		Mode: rplidarModeDefault,
-		Args: "-r 660 -m 2",
-		Path: "scan-dummy.exe",
+		RPM:  lidarRPM,
+		Mode: lidarMode,
+		Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
+		Path: "lidar.exe",
 	}
 
 	// Create communication channels
