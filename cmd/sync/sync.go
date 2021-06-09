@@ -102,10 +102,12 @@ func main() {
 	for {
 		select {
 		case lidarData := <-lidarChan:
-			if lidarOut {
-				writer.WriteString(fmt.Sprintf("L %d %d\n", lidarData.ID, lidarData.Size))
-			}
 			lidarBuffer = lidarData
+			if lidarOut {
+				for _, pt := range lidarBuffer.Data[:lidarBuffer.Size] {
+					writer.WriteString(fmt.Sprintf("L %f %f\n", pt.Angle, pt.Dist))
+				}
+			}
 		case servoData := <-servoChan:
 			if servoOut {
 				writer.WriteString(fmt.Sprintf("S %d %d\n", servoData.timept.UnixNano(), servoData.positon))
@@ -121,6 +123,6 @@ func main() {
 		}
 		writer.Flush()
 
-		go mergerLidarServoV1(lidarBuffer, &servoBuffer, true)
+		// go mergerLidarServoV1(lidarBuffer, &servoBuffer, true)
 	}
 }

@@ -20,3 +20,4 @@
 # other
 /datasets
 .DS_Store
+*.txt

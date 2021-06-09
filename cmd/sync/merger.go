@@ -62,7 +62,7 @@ func mergerLidarServoV1(lidarBuff *LidarCloud, servoBuff *ServoDataBuffer, print
 		}
 
 		if print && lidarBuff.Data[i].Dist != 0 {
-			fmt.Println(lidarBuff.Data[i].Angle, servoAngle, lidarBuff.Data[i].Dist)
+			fmt.Println("L", lidarBuff.Data[i].Angle, lidarBuff.Data[i].Dist)
 		}
 	}
 

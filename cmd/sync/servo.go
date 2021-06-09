@@ -13,7 +13,7 @@ const (
 	servoMinPos    = 1000
 	servoStartPos  = 2500
 	servoMaxPos    = 3000
-	servoUnitToDeg = 0.1 // 1 servo position unit = servoUnitToDeg * 1deg
+	servoUnitToDeg = 0.05 // 1 servo position unit = servoUnitToDeg * 1deg
 )
 
 type ServoData struct {
