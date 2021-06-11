@@ -21,6 +21,7 @@ var (
 	accelOut      bool
 	servoOut      bool
 	lidarOut      bool
+	syncMode      int
 )
 
 func init() {
@@ -38,6 +39,8 @@ func init() {
 	flag.BoolVar(&accelOut, "accel", false, "print accelerometer data on stdout")
 	flag.BoolVar(&servoOut, "servo", false, "print set servo position on stdout")
 	flag.BoolVar(&lidarOut, "lidar", false, "print lidar data on stdout")
+
+	flag.IntVar(&syncMode, "mode", 0, "synchronization mode")
 
 	flag.Parse()
 	log.Println("starting...")
@@ -67,7 +70,7 @@ func main() {
 		data:       ServoData{positon: servoStartPos},
 		positonMin: servoMinPos,
 		positonMax: servoMaxPos,
-		vector:     50,
+		vector:     30,
 		port:       port,
 		delayMs:    60,
 	}
@@ -92,6 +95,30 @@ func main() {
 	accelBuffer := NewAccelDataBuffer(32)
 	servoBuffer := NewServoDataBuffer(32)
 	var lidarBuffer *LidarCloud
+
+	if syncMode == 0 {
+		for {
+			servo.Move()
+			if err := servo.SendData(); err != nil {
+				log.Println("Unable to send servo data: ", err)
+			}
+			time.Sleep(time.Millisecond * 1000)
+			// serv := float64(servo.data.positon-servoMinPos) * 0.05
+			// <-lidarChan
+			// lidarData := <-lidarChan
+			// for i := 0; i < int(lidarData.Size); i++ {
+			// 	pt := lidarData.Data[i]
+			// 	x := float64(pt.Dist) * math.Cos(serv*math.Pi/180) * math.Sin(float64(pt.Angle)*math.Pi/180)
+			// 	y := float64(pt.Dist) * math.Sin(serv*math.Pi/180) * math.Sin(float64(pt.Angle)*math.Pi/180)
+			// 	z := float64(pt.Dist) * math.Cos(float64(pt.Angle)*math.Pi/180)
+			// 	if pt.Dist != 0 {
+			// 		writer.WriteString(fmt.Sprintf("L %f %f %f\n", x, y, z))
+			// 	}
+			// }
+			// time.Sleep(time.Millisecond * 200)
+		}
+
+	}
 
 	// Start goroutines
 	go lidar.StartLoop(lidarChan)
