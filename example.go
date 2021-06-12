@@ -3,42 +3,42 @@ package main
 import (
 	"fmt"
 
-	"github.com/knei-knurow/lidar-tools/frames"
+	"github.com/knei-knurow/frames"
 )
 
 var testCases = []struct {
-	inputHeader      []byte
+	inputHeader      [2]byte
 	inputData        []byte
 	expectedChecksum byte
 	expectedLength   int
 }{
 	{
-		inputHeader:      []byte{'L', 'D'},
+		inputHeader:      [2]byte{'L', 'D'},
 		inputData:        []byte{},
 		expectedChecksum: 0x00,
 	},
 	{
-		inputHeader:      []byte{'L', 'D'},
+		inputHeader:      [2]byte{'L', 'D'},
 		inputData:        []byte{'A'},
 		expectedChecksum: 0x41,
 	},
 	{
-		inputHeader:      []byte{'L', 'D'},
+		inputHeader:      [2]byte{'L', 'D'},
 		inputData:        []byte{'t', 'e', 's', 't'},
 		expectedChecksum: 0x16,
 	},
 	{
-		inputHeader:      []byte{'L', 'D'},
+		inputHeader:      [2]byte{'L', 'D'},
 		inputData:        []byte{'d', 'u', 'p', 'c', 'i', 'a'},
 		expectedChecksum: 0x0a,
 	},
 	{
-		inputHeader:      []byte{'L', 'D'},
+		inputHeader:      [2]byte{'L', 'D'},
 		inputData:        []byte{'l', 'o', 'l', 'x', 'd'},
 		expectedChecksum: 0x73,
 	},
 	{
-		inputHeader:      []byte{'M', 'T'},
+		inputHeader:      [2]byte{'M', 'T'},
 		inputData:        []byte{'d', 'o', 'n', 'd', 'u'},
 		expectedChecksum: 0x30,
 	},
