@@ -1,5 +1,7 @@
 github.com/jacobsa/go-serial v0.0.0-20180131005756-15cf729a72d4 h1:G2ztCwXov8mRvP0ZfjE6nAlaCX2XbykaeHdbT6KwDz0=
 github.com/jacobsa/go-serial v0.0.0-20180131005756-15cf729a72d4/go.mod h1:2RvX5ZjVtsznNZPEt4xwJXNJrM3VTZoQf7V6gk0ysvs=
+github.com/knei-knurow/frames v0.0.0-20210612000046-e9f2eda1b0cf h1:u5jbUksxs6uMkiPplLa5rqWjOk/GCEUI106QTA1Fz2Q=
+github.com/knei-knurow/frames v0.0.0-20210612000046-e9f2eda1b0cf/go.mod h1:AlSXmIiJrGroKu/4wdnk/y6AcxqSXBDb4fk61xlE/cY=
 github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07 h1:UyzmZLoiDWMRywV4DUYb9Fbt8uiOSooupjTq10vpvnU=
 github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07/go.mod h1:kDXzergiv9cbyO7IOYJZWg1U88JhDg3PB6klq9Hg2pA=
 golang.org/x/sys v0.0.0-20210521203332-0cec03c779c1 h1:lCnv+lfrU9FRPGf8NeRuWAAPjNnema5WtBinMgs1fD8=

@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/knei-knurow/lidar-tools/frames"
+	"github.com/knei-knurow/frames"
 )
 
 const (
@@ -47,15 +47,14 @@ func (servo *Servo) Move() {
 func (servo *Servo) SendData() (err error) {
 	inputByte := servo.data.positon
 	data := []byte{byte(inputByte >> 8), byte(inputByte)} // TODO: Check whether correct
-	f := frames.Create([]byte(frames.LidarHeader), data)
+	f := frames.Create([2]byte{'L', 'D'}, data)
 	for i, currentByte := range f {
 		if _, err := servo.port.Write([]byte{currentByte}); err != nil {
 			return fmt.Errorf("cannot write data (byte %d) to port: %s", i, err)
 		}
 	}
 
-	// POSSIBLE ERROR SOURCE: that's the time of the frame sending,
-	// not actual servo set time
+	// POSSIBLE SOURCE OF ERRORS: that's the frame send time, not the actual servo set time
 	servo.data.timept = time.Now()
 	return nil
 }
@@ -73,7 +72,7 @@ func (servo *Servo) StartLoop(channel chan ServoData) {
 	for {
 		servo.Move()
 		if err := servo.SendData(); err != nil {
-			log.Println("Unable to send servo data: ", err)
+			log.Println("unable to send servo data:", err)
 		}
 		channel <- servo.data
 

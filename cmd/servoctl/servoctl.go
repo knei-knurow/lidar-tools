@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/jacobsa/go-serial/serial"
-	"github.com/knei-knurow/lidar-tools/frames"
+	"github.com/knei-knurow/frames"
 )
 
 var (
@@ -72,7 +72,7 @@ func main() {
 
 	inputByte := uint16(value)
 	data := []byte{byte(inputByte >> 8), byte(inputByte)}
-	frame := frames.Create([]byte(frames.LidarHeader), data)
+	frame := frames.Create([2]byte{'L', 'D'}, data)
 
 	log.Printf("frame: %s\n", frame)
 	for i, currentByte := range frame {

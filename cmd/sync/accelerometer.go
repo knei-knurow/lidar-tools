@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/knei-knurow/lidar-tools/frames"
+	"github.com/knei-knurow/frames"
 )
 
 type AccelData struct {
@@ -48,8 +48,8 @@ func (accel *Accel) StartLoop(channel chan AccelData) {
 func (accel *Accel) ProcessAccelFrame(frame frames.Frame) (err error) {
 	timept := time.Now()
 
-	if frame[0] != frames.LidarHeader[0] ||
-		frame[1] != frames.LidarHeader[1] ||
+	if frame[0] != 'L' ||
+		frame[1] != 'D' ||
 		frame[2] != 12 ||
 		frame[3] != '+' {
 		return errors.New("bad frame begin")
@@ -117,7 +117,7 @@ func (accel *Accel) ReadAceelFrame(data []byte) (err error) {
 		if scan {
 			data[i] = buf[0]
 		} else {
-			if buf[0] == frames.LidarHeader[0] {
+			if buf[0] == 'L' {
 				scan = true
 				data[i] = buf[0]
 			} else {
