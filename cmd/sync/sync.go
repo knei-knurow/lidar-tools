@@ -60,6 +60,9 @@ func main() {
 	// Sources of data initialization
 	accel := Accel{
 		calibration: accelCalib,
+		accelScale:  AccelScaleDefault,
+		gyroScale:   GyroScaleDefault,
+		deltaTime:   DeltaTimeDefault,
 		port:        port,
 		mode:        AccelModeRaw,
 	}
@@ -119,7 +122,7 @@ func main() {
 					// 	accelData.raw.timept.UnixNano(),
 					// 	accelData.raw.xAccel, accelData.raw.yAccel, accelData.raw.zAccel,
 					// 	accelData.raw.xGyro, accelData.raw.yGyro, accelData.raw.zGyro))
-					writer.WriteString(fmt.Sprintf("%d\t%d\t%d\t%d\t%d\t%d\n",
+					writer.WriteString(fmt.Sprintf("%f\t%f\t%f\t%f\t%f\t%f\n",
 						accelData.raw.xAccel, accelData.raw.yAccel, accelData.raw.zAccel,
 						accelData.raw.xGyro, accelData.raw.yGyro, accelData.raw.zGyro))
 				} else {

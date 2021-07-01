@@ -13,16 +13,16 @@ import (
 
 // AccelData contains raw accel data
 type AccelData struct {
-	xAccel int
-	yAccel int
-	zAccel int
-	xGyro  int
-	yGyro  int
-	zGyro  int
+	xAccel float32
+	yAccel float32
+	zAccel float32
+	xGyro  float32
+	yGyro  float32
+	zGyro  float32
 	timept time.Time
 }
 
-// AccelDataDMP contains accel data processed by Digital Motion Processor
+// AccelDataDMP contains accel data processed by Digital Motion Processor (quaternions)
 type AccelDataDMP struct {
 	qw     float32
 	qx     float32
@@ -37,14 +37,38 @@ type AccelDataUnion struct {
 	dmp AccelDataDMP
 }
 
+// Supported data processing modes
 const (
 	AccelModeRaw = iota
 	AccelModeDMP
 )
 
+// MPU-6050 constants. More details in the product documentation.
+const (
+	AccelScale2   = 16384.0
+	AccelScale4   = 8192.0
+	AccelScale8   = 4096.0
+	AccelScale16  = 2048.0
+	GyroScale250  = 131.0
+	GyroScale500  = 65.5
+	GyroScale1000 = 32.8
+	GyroScale2000 = 16.4
+)
+
+// lidar-avr settings
+const (
+	AccelScaleDefault = AccelScale2
+	GyroScaleDefault  = GyroScale250
+	DeltaTimeDefault  = 0.02 // time in seconds between two measurements
+)
+
 type Accel struct {
 	mode        int
 	calibration AccelData
+	accelScale  float32
+	gyroScale   float32
+	deltaTime   float32
+	frequency   float32
 	port        io.Reader
 	data        AccelDataUnion
 }
@@ -65,6 +89,7 @@ var (
 func (accel *Accel) StartLoop(channel chan AccelDataUnion) {
 	for {
 		accel.ReadData()
+		accel.PreprocessData()
 		channel <- accel.data
 	}
 }
@@ -85,14 +110,13 @@ func (accel *Accel) ProcessAccelFrame(frame frames.Frame) (err error) {
 
 	fdata := frame.Data()
 	accel.data.raw.timept = timept // POSSIBLE ERROR SOURCE: Time of data receipt
-	accel.data.raw.xAccel = mergeBytes(fdata[0], fdata[1])
-	accel.data.raw.yAccel = mergeBytes(fdata[2], fdata[3])
-	accel.data.raw.zAccel = mergeBytes(fdata[4], fdata[5])
-	accel.data.raw.xGyro = mergeBytes(fdata[6], fdata[7])
-	accel.data.raw.yGyro = mergeBytes(fdata[8], fdata[9])
-	accel.data.raw.zGyro = mergeBytes(fdata[10], fdata[11])
+	accel.data.raw.xAccel = float32(mergeBytes(fdata[0], fdata[1]))
+	accel.data.raw.yAccel = float32(mergeBytes(fdata[2], fdata[3]))
+	accel.data.raw.zAccel = float32(mergeBytes(fdata[4], fdata[5]))
+	accel.data.raw.xGyro = float32(mergeBytes(fdata[6], fdata[7]))
+	accel.data.raw.yGyro = float32(mergeBytes(fdata[8], fdata[9]))
+	accel.data.raw.zGyro = float32(mergeBytes(fdata[10], fdata[11]))
 
-	accel.calibrate()
 	return nil
 }
 
@@ -120,16 +144,17 @@ func (accel *Accel) ProcessAccelFrameDMP(frame frames.Frame) (err error) {
 	return nil
 }
 
-func (accel *Accel) calibrate() {
-	accel.data.raw.xAccel += accel.calibration.xAccel
-	accel.data.raw.yAccel += accel.calibration.yAccel
-	accel.data.raw.zAccel += accel.calibration.zAccel
-	accel.data.raw.xGyro += accel.calibration.xGyro
-	accel.data.raw.yGyro += accel.calibration.yGyro
-	accel.data.raw.zGyro += accel.calibration.zGyro
+// PreprocessData converts raw accel data to X * gravitational_acceleration and gyro to deg/s
+func (accel *Accel) PreprocessData() {
+	accel.data.raw.xAccel = (accel.data.raw.xAccel + accel.calibration.xAccel) / accel.accelScale
+	accel.data.raw.yAccel = (accel.data.raw.yAccel + accel.calibration.yAccel) / accel.accelScale
+	accel.data.raw.zAccel = (accel.data.raw.zAccel + accel.calibration.zAccel) / accel.accelScale
+	accel.data.raw.xGyro = (accel.data.raw.xGyro + accel.calibration.xGyro) / accel.gyroScale
+	accel.data.raw.yGyro = (accel.data.raw.yGyro + accel.calibration.yGyro) / accel.gyroScale
+	accel.data.raw.zGyro = (accel.data.raw.zGyro + accel.calibration.zGyro) / accel.gyroScale
 }
 
-// mergeBytes Merges two bytest to int
+// mergeBytes merges two bytest to int
 func mergeBytes(left8 byte, right8 byte) int {
 	v := int((uint16(left8) << 8) | uint16(right8))
 	// awesome conversion to signed int
