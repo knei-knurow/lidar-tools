@@ -14,12 +14,12 @@ import (
 
 // Lidar-related constants.
 const (
-	lidarMaxDataSize = 8192
+	lidarMaxDataSize = 8192 // defined by RPLIDAR hardware
 
 	// Lidar scanning modes.
 	rplidarModeBoost       = 2
-	rplidarModeSensitivity = 3
-	rplidarModeStability   = 4
+	rplidarModeSensitivity = 3 // best for indoor applications
+	rplidarModeStability   = 4 // best for very sunny days (like "Dni Knurowa 2021")
 	rplidarModeDefault     = rplidarModeSensitivity
 )
 

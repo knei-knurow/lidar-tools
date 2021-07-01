@@ -89,36 +89,36 @@ func main() {
 	log.Println("waiting for the servo")
 	time.Sleep(time.Second) // to be sure that the servo is on the right position
 
-	// lidar := Lidar{ // TODO: make it more configurable from command line
-	// 	RPM:  lidarRPM,
-	// 	Mode: lidarMode,
-	// 	Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
-	// 	Path: lidarExe, // TODO: Check if exists
-	// }
+	lidar := Lidar{ // TODO: make it more configurable from command line
+		RPM:  lidarRPM,
+		Mode: lidarMode,
+		Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
+		Path: lidarExe, // TODO: Check if exists
+	}
 
 	// Create communication channels
-	// lidarChan := make(chan *LidarCloud) // LidarCloud is >64kB so it cannot be directly passed by a channel
+	lidarChan := make(chan *LidarCloud) // LidarCloud is >64kB so it cannot be directly passed by a channel
 	servoChan := make(chan ServoData)
 	accelChan := make(chan AccelDataUnion)
 
 	// Create data buffers
 	accelBuffer := NewAccelDataBuffer(32)
 	servoBuffer := NewServoDataBuffer(32)
-	// var lidarBuffer *LidarCloud
+	//var lidarBuffer *LidarCloud
 
 	// Start goroutines
-	// go lidar.StartLoop(lidarChan)
+	go lidar.StartLoop(lidarChan)
 	go servo.StartLoop(servoChan)
 	go accel.StartLoop(accelChan)
 
 	// Main loop
 	for {
 		select {
-		// case lidarData := <-lidarChan:
-		// 	if lidarOut {
-		// 		writer.WriteString(fmt.Sprintf("L %d %d\n", lidarData.ID, lidarData.Size))
-		// 	}
-		// lidarBuffer = lidarData
+		case lidarData := <-lidarChan:
+			if lidarOut {
+				writer.WriteString(fmt.Sprintf("L %d %d\n", lidarData.ID, lidarData.Size))
+			}
+			//lidarBuffer = lidarData
 		case servoData := <-servoChan:
 			if servoOut {
 				writer.WriteString(fmt.Sprintf("S %d %d\n", servoData.timept.UnixNano(), servoData.positon))
@@ -143,7 +143,5 @@ func main() {
 			accelBuffer.Append(accelData)
 		}
 		writer.Flush()
-
-		// go mergerLidarServoV1(lidarBuffer, &servoBuffer, true)
 	}
 }

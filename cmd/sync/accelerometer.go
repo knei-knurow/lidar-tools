@@ -11,6 +11,31 @@ import (
 	"github.com/knei-knurow/frames"
 )
 
+// Supported data processing modes
+const (
+	AccelModeRaw = iota
+	AccelModeDMP
+)
+
+// MPU-6050 constants. More details in the product documentation.
+const (
+	AccelScale2   = 16384.0
+	AccelScale4   = 8192.0
+	AccelScale8   = 4096.0
+	AccelScale16  = 2048.0
+	GyroScale250  = 131.0
+	GyroScale500  = 65.5
+	GyroScale1000 = 32.8
+	GyroScale2000 = 16.4
+)
+
+// lidar-avr settings
+const (
+	AccelScaleDefault = AccelScale2
+	GyroScaleDefault  = GyroScale250
+	DeltaTimeDefault  = 0.02 // time in seconds between two measurements
+)
+
 // AccelData contains raw accel data
 type AccelData struct {
 	xAccel float32
@@ -37,31 +62,7 @@ type AccelDataUnion struct {
 	dmp AccelDataDMP
 }
 
-// Supported data processing modes
-const (
-	AccelModeRaw = iota
-	AccelModeDMP
-)
-
-// MPU-6050 constants. More details in the product documentation.
-const (
-	AccelScale2   = 16384.0
-	AccelScale4   = 8192.0
-	AccelScale8   = 4096.0
-	AccelScale16  = 2048.0
-	GyroScale250  = 131.0
-	GyroScale500  = 65.5
-	GyroScale1000 = 32.8
-	GyroScale2000 = 16.4
-)
-
-// lidar-avr settings
-const (
-	AccelScaleDefault = AccelScale2
-	GyroScaleDefault  = GyroScale250
-	DeltaTimeDefault  = 0.02 // time in seconds between two measurements
-)
-
+// Accel is the main accelerometer control struct
 type Accel struct {
 	mode        int
 	calibration AccelData
@@ -73,9 +74,18 @@ type Accel struct {
 	data        AccelDataUnion
 }
 
+// MPU-6050 predefined calibrations
 var (
 	accelCalib = AccelData{
 		// POSSIBLE ERROR SOURCE: Values differ depending on the temperature
+		xAccel: 812.0,
+		yAccel: 118.0,
+		zAccel: -14750.0 + AccelScale2,
+		xGyro:  55.0,
+		yGyro:  -56.0,
+		zGyro:  39.0,
+	}
+	noAccelCalib = AccelData{
 		xAccel: 0,
 		yAccel: 0,
 		zAccel: 0,
@@ -94,6 +104,8 @@ func (accel *Accel) StartLoop(channel chan AccelDataUnion) {
 	}
 }
 
+// ProcessAccelFrame takes data frame containing raw accelerometer measurements and tries
+// to unpack them and store in the accel struct.
 func (accel *Accel) ProcessAccelFrame(frame frames.Frame) (err error) {
 	timept := time.Now()
 
@@ -120,6 +132,8 @@ func (accel *Accel) ProcessAccelFrame(frame frames.Frame) (err error) {
 	return nil
 }
 
+// ProcessAccelFrameDMP takes data frame containing DMP-processed accelerometer measurements
+// and tries to unpack them and store in the accel struct.
 func (accel *Accel) ProcessAccelFrameDMP(frame frames.Frame) (err error) {
 	timept := time.Now()
 
