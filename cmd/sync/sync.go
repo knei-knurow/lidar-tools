@@ -12,15 +12,21 @@ import (
 )
 
 var (
-	avrPortName   string
-	avrBaudRate   int
+	avrPortName string
+	avrBaudRate int
+
 	lidarPortName string
 	lidarMode     int
 	lidarRPM      int
 	lidarExe      string
-	accelOut      bool
-	servoOut      bool
-	lidarOut      bool
+
+	accelOut bool
+	servoOut bool
+	lidarOut bool
+
+	accelTest bool
+	servoTest bool
+	lidarTest bool
 )
 
 func init() {
@@ -38,6 +44,10 @@ func init() {
 	flag.BoolVar(&accelOut, "accel", false, "print accelerometer data on stdout")
 	flag.BoolVar(&servoOut, "servo", false, "print set servo position on stdout")
 	flag.BoolVar(&lidarOut, "lidar", false, "print lidar data on stdout")
+
+	flag.BoolVar(&accelTest, "acceltest", false, "perform accelerometer test and exit (to check connection, power, etc)")
+	flag.BoolVar(&servoTest, "servotest", false, "perform servo test and exit (to check connection, power, etc)")
+	flag.BoolVar(&lidarTest, "lidartest", false, "perform lidar test and exit (to check connection, power, etc)")
 
 	flag.Parse()
 	log.Println("starting...")
@@ -66,7 +76,6 @@ func main() {
 		port:        port,
 		mode:        AccelModeRaw,
 	}
-
 	servo := Servo{
 		data:       ServoData{positon: servoStartPos},
 		positonMin: servoMinPos,
