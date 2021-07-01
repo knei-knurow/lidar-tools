@@ -4,18 +4,18 @@ import "errors"
 
 type AccelDataBuffer struct {
 	size   int
-	data   []AccelData
+	data   []AccelDataUnion
 	pos    int
 	isFull bool
 }
 
 func NewAccelDataBuffer(size int) (buffer AccelDataBuffer) {
 	buffer.size = size
-	buffer.data = make([]AccelData, size)
+	buffer.data = make([]AccelDataUnion, size)
 	return buffer
 }
 
-func (buffer *AccelDataBuffer) Append(element AccelData) (err error) {
+func (buffer *AccelDataBuffer) Append(element AccelDataUnion) (err error) {
 	if buffer.size == 0 {
 		return errors.New("buffer size equals 0")
 	}
@@ -30,15 +30,15 @@ func (buffer *AccelDataBuffer) Append(element AccelData) (err error) {
 	return nil
 }
 
-func (buffer *AccelDataBuffer) Get(posFromTop int) (element AccelData, err error) {
+func (buffer *AccelDataBuffer) Get(posFromTop int) (element AccelDataUnion, err error) {
 	if posFromTop > buffer.size {
-		return AccelData{}, errors.New("too high position")
+		return AccelDataUnion{}, errors.New("too high position")
 	}
 
 	pos := buffer.pos - 1 - posFromTop
 	if pos < 0 {
 		if !buffer.isFull {
-			return AccelData{}, errors.New("too high position because buffer is not full")
+			return AccelDataUnion{}, errors.New("too high position because buffer is not full")
 		}
 		pos += buffer.size
 	}

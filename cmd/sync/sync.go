@@ -27,7 +27,7 @@ func init() {
 	log.SetFlags(0)
 	log.SetPrefix("sync: ")
 
-	flag.StringVar(&avrPortName, "avrport", "COM9", "AVR serial communication port")
+	flag.StringVar(&avrPortName, "avrport", "COM13", "AVR serial communication port")
 	flag.IntVar(&avrBaudRate, "avrbaud", 19200, "port baud rate (bps)")
 
 	flag.StringVar(&lidarExe, "lidarexe", "lidar.exe", "lidar-scan executable")
@@ -61,51 +61,52 @@ func main() {
 	accel := Accel{
 		calibration: accelCalib,
 		port:        port,
+		mode:        AccelModeRaw,
 	}
 
 	servo := Servo{
 		data:       ServoData{positon: servoStartPos},
 		positonMin: servoMinPos,
 		positonMax: servoMaxPos,
-		vector:     50,
+		vector:     100,
 		port:       port,
-		delayMs:    60,
+		delayMs:    100,
 	}
 	log.Println("setting the servo to the start position")
 	servo.SetPosition(servoStartPos)
 	log.Println("waiting for the servo")
 	time.Sleep(time.Second) // to be sure that the servo is on the right position
 
-	lidar := Lidar{ // TODO: make it more configurable from command line
-		RPM:  lidarRPM,
-		Mode: lidarMode,
-		Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
-		Path: lidarExe, // TODO: Check if exists
-	}
+	// lidar := Lidar{ // TODO: make it more configurable from command line
+	// 	RPM:  lidarRPM,
+	// 	Mode: lidarMode,
+	// 	Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
+	// 	Path: lidarExe, // TODO: Check if exists
+	// }
 
 	// Create communication channels
-	lidarChan := make(chan *LidarCloud) // LidarCloud is >64kB so it cannot be directly passed by a channel
+	// lidarChan := make(chan *LidarCloud) // LidarCloud is >64kB so it cannot be directly passed by a channel
 	servoChan := make(chan ServoData)
-	accelChan := make(chan AccelData)
+	accelChan := make(chan AccelDataUnion)
 
 	// Create data buffers
 	accelBuffer := NewAccelDataBuffer(32)
 	servoBuffer := NewServoDataBuffer(32)
-	var lidarBuffer *LidarCloud
+	// var lidarBuffer *LidarCloud
 
 	// Start goroutines
-	go lidar.StartLoop(lidarChan)
+	// go lidar.StartLoop(lidarChan)
 	go servo.StartLoop(servoChan)
 	go accel.StartLoop(accelChan)
 
 	// Main loop
 	for {
 		select {
-		case lidarData := <-lidarChan:
-			if lidarOut {
-				writer.WriteString(fmt.Sprintf("L %d %d\n", lidarData.ID, lidarData.Size))
-			}
-			lidarBuffer = lidarData
+		// case lidarData := <-lidarChan:
+		// 	if lidarOut {
+		// 		writer.WriteString(fmt.Sprintf("L %d %d\n", lidarData.ID, lidarData.Size))
+		// 	}
+		// lidarBuffer = lidarData
 		case servoData := <-servoChan:
 			if servoOut {
 				writer.WriteString(fmt.Sprintf("S %d %d\n", servoData.timept.UnixNano(), servoData.positon))
@@ -113,14 +114,24 @@ func main() {
 			servoBuffer.Append(servoData)
 		case accelData := <-accelChan:
 			if accelOut {
-				writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n", accelData.timept.UnixNano(),
-					accelData.xAccel, accelData.yAccel, accelData.zAccel,
-					accelData.xGyro, accelData.yGyro, accelData.zGyro))
+				if accel.mode == AccelModeRaw {
+					// writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+					// 	accelData.raw.timept.UnixNano(),
+					// 	accelData.raw.xAccel, accelData.raw.yAccel, accelData.raw.zAccel,
+					// 	accelData.raw.xGyro, accelData.raw.yGyro, accelData.raw.zGyro))
+					writer.WriteString(fmt.Sprintf("%d\t%d\t%d\t%d\t%d\t%d\n",
+						accelData.raw.xAccel, accelData.raw.yAccel, accelData.raw.zAccel,
+						accelData.raw.xGyro, accelData.raw.yGyro, accelData.raw.zGyro))
+				} else {
+					writer.WriteString(fmt.Sprintf("a %d\t%f\t%f\t%f\t%f\n",
+						accelData.dmp.timept.UnixNano(),
+						accelData.dmp.qw, accelData.dmp.qx, accelData.dmp.qy, accelData.dmp.qz))
+				}
 			}
 			accelBuffer.Append(accelData)
 		}
 		writer.Flush()
 
-		go mergerLidarServoV1(lidarBuffer, &servoBuffer, true)
+		// go mergerLidarServoV1(lidarBuffer, &servoBuffer, true)
 	}
 }
