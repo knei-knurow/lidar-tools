@@ -38,21 +38,21 @@ const (
 
 // AccelData contains raw accel data
 type AccelData struct {
-	xAccel float32
-	yAccel float32
-	zAccel float32
-	xGyro  float32
-	yGyro  float32
-	zGyro  float32
+	xAccel float64
+	yAccel float64
+	zAccel float64
+	xGyro  float64
+	yGyro  float64
+	zGyro  float64
 	timept time.Time
 }
 
 // AccelDataDMP contains accel data processed by Digital Motion Processor (quaternions)
 type AccelDataDMP struct {
-	qw     float32
-	qx     float32
-	qy     float32
-	qz     float32
+	qw     float64
+	qx     float64
+	qy     float64
+	qz     float64
 	timept time.Time
 }
 
@@ -66,10 +66,9 @@ type AccelDataUnion struct {
 type Accel struct {
 	mode        int
 	calibration AccelData
-	accelScale  float32
-	gyroScale   float32
-	deltaTime   float32
-	frequency   float32
+	accelScale  float64
+	gyroScale   float64
+	deltaTime   float64
 	port        io.Reader
 	data        AccelDataUnion
 }
@@ -122,12 +121,12 @@ func (accel *Accel) ProcessAccelFrame(frame frames.Frame) (err error) {
 
 	fdata := frame.Data()
 	accel.data.raw.timept = timept // POSSIBLE ERROR SOURCE: Time of data receipt
-	accel.data.raw.xAccel = float32(mergeBytes(fdata[0], fdata[1]))
-	accel.data.raw.yAccel = float32(mergeBytes(fdata[2], fdata[3]))
-	accel.data.raw.zAccel = float32(mergeBytes(fdata[4], fdata[5]))
-	accel.data.raw.xGyro = float32(mergeBytes(fdata[6], fdata[7]))
-	accel.data.raw.yGyro = float32(mergeBytes(fdata[8], fdata[9]))
-	accel.data.raw.zGyro = float32(mergeBytes(fdata[10], fdata[11]))
+	accel.data.raw.xAccel = float64(mergeBytes(fdata[0], fdata[1]))
+	accel.data.raw.yAccel = float64(mergeBytes(fdata[2], fdata[3]))
+	accel.data.raw.zAccel = float64(mergeBytes(fdata[4], fdata[5]))
+	accel.data.raw.xGyro = float64(mergeBytes(fdata[6], fdata[7]))
+	accel.data.raw.yGyro = float64(mergeBytes(fdata[8], fdata[9]))
+	accel.data.raw.zGyro = float64(mergeBytes(fdata[10], fdata[11]))
 
 	return nil
 }
@@ -179,10 +178,10 @@ func mergeBytes(left8 byte, right8 byte) int {
 }
 
 // float32frombytes converts 4 bytes to float32
-func float32frombytes(bytes []byte) float32 {
+func float32frombytes(bytes []byte) float64 {
 	bits := binary.LittleEndian.Uint32(bytes)
 	float := math.Float32frombits(bits)
-	return float
+	return float64(float)
 }
 
 // ReadData reads and parses new measurement
