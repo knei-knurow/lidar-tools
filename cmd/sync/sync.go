@@ -20,6 +20,8 @@ var (
 	lidarRPM      int
 	lidarExe      string
 
+	accelExe string
+
 	accelOut bool
 	servoOut bool
 	lidarOut bool
@@ -40,6 +42,8 @@ func init() {
 	flag.StringVar(&lidarPortName, "lidarport", "COM4", "RPLIDAR serial communication port")
 	flag.IntVar(&lidarMode, "lidarmode", rplidarModeDefault, "RPLIDAR mode")
 	flag.IntVar(&lidarRPM, "lidarpm", 660, "RPLIDAR given revolutions per minute")
+
+	flag.StringVar(&accelExe, "accelexe", "attitude-estimator.exe", "attitude estimator executable")
 
 	flag.BoolVar(&accelOut, "accel", false, "print accelerometer data on stdout")
 	flag.BoolVar(&servoOut, "servo", false, "print set servo position on stdout")
@@ -75,6 +79,10 @@ func main() {
 		deltaTime:   DeltaTimeDefault,
 		port:        port,
 		mode:        AccelModeRaw,
+		process: Process{
+			Args: []string{},
+			Path: accelExe, // TODO: Check if exists
+		},
 	}
 	servo := Servo{
 		data:       ServoData{positon: servoStartPos},

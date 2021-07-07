@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"math"
@@ -86,6 +88,7 @@ type Accel struct {
 	deltaTime   float64
 	port        io.Reader
 	data        AccelDataUnion
+	process     Process
 }
 
 // MPU-6050 predefined calibrations
@@ -110,10 +113,25 @@ var (
 )
 
 // StartLoop starts the accelerometer main loop
-func (accel *Accel) StartLoop(channel chan AccelDataUnion) {
+func (accel *Accel) StartLoop(channel chan AccelDataUnion) (err error) {
+	if err := accel.process.StartProcess(); err != nil {
+		return fmt.Errorf("start accel process: %v", err)
+	}
+
+	scanner := bufio.NewScanner(accel.process.Stdout)
+	scanner.Split(bufio.ScanLines)
+
 	for {
 		accel.ReadData()
 		accel.PreprocessData()
+
+		for scanner.Scan() {
+
+		}
+		if err := scanner.Err(); err != nil {
+			return err
+		}
+
 		channel <- accel.data
 	}
 }

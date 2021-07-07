@@ -24,11 +24,20 @@ func (process *Process) StartProcess() error {
 	process.process = exec.Command(process.Path, process.Args...)
 	log.Println("starting", process.Path, "process with args:", process.Args)
 
+	// stdout
 	var err error
 	process.Stdout, err = process.process.StdoutPipe()
 	if err != nil {
 		return fmt.Errorf("get stdout of process: %v", err)
 	}
+
+	// stdin
+	process.Stdin, err = process.process.StdinPipe()
+	if err != nil {
+		return fmt.Errorf("get stdin of process: %v", err)
+	}
+
+	// stderr
 	process.process.Stderr = os.Stderr
 	process.Stderr = os.Stderr
 

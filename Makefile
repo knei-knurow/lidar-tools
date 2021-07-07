@@ -1,10 +1,11 @@
-all: receiver servoctl sync transmitter scandummy
+all: receiver servoctl sync transmitter scandummy attitude-estimator
 
 RECEIVER := ./cmd/receiver
 SERVOCTL:= ./cmd/servoctl
 SYNC := ./cmd/sync
 TRANSMITTER := ./cmd/transmitter
 SCAN_DUMMY := ./misc/scan-dummy
+ATTITUDE_ESTIMATOR := ./attitude-estimator
 
 receiver: $(RECEIVER)/receiver.go
 	go build $(RECEIVER)/receiver.go
@@ -20,6 +21,9 @@ transmitter: $(TRANSMITTER)/transmitter.go
 
 scandummy: $(SCAN_DUMMY)/scan-dummy.go
 	go build  $(SCAN_DUMMY)/scan-dummy.go
+
+attitude-estimator:  $(ATTITUDE_ESTIMATOR)/main.cpp
+	g++ $(ATTITUDE_ESTIMATOR)/main.cpp $(ATTITUDE_ESTIMATOR)/attitude_estimator.cpp -o attitude-estimator
 
 install:
 	cp ./receiver /usr/local/bin
