@@ -92,8 +92,10 @@ func main() {
 	lidar := Lidar{ // TODO: make it more configurable from command line
 		RPM:  lidarRPM,
 		Mode: lidarMode,
-		Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
-		Path: lidarExe, // TODO: Check if exists
+		Process: Process{
+			Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
+			Path: lidarExe, // TODO: Check if exists
+		},
 	}
 
 	// Create communication channels
@@ -111,8 +113,6 @@ func main() {
 	go servo.StartLoop(servoChan)
 	go accel.StartLoop(accelChan)
 
-	pos := 0.0
-
 	// Main loop
 	for {
 		select {
@@ -127,8 +127,6 @@ func main() {
 			}
 			servoBuffer.Append(servoData)
 		case accelData := <-accelChan:
-			writer.WriteString(fmt.Sprintf("0 0 0 0 %f 0\n", pos))
-			pos += accel.deltaTime * (accelData.raw.yGyro - 1.2681606624632198)
 			if accelOut {
 				if accel.mode == AccelModeRaw {
 					// writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n",

@@ -36,7 +36,7 @@ const (
 	DeltaTimeDefault  = 0.02 // time in seconds between two measurements
 )
 
-// AccelData contains raw accel data
+// AccelData contains raw accel data (accel, gyro)
 type AccelData struct {
 	xAccel float64
 	yAccel float64
@@ -44,6 +44,20 @@ type AccelData struct {
 	xGyro  float64
 	yGyro  float64
 	zGyro  float64
+	timept time.Time
+}
+
+// AccelDataExt contains raw accel data (accel, gyro, mag)
+type AccelDataExt struct {
+	xAccel float64
+	yAccel float64
+	zAccel float64
+	xGyro  float64
+	yGyro  float64
+	zGyro  float64
+	xMag   float64
+	yMag   float64
+	zMag   float64
 	timept time.Time
 }
 
@@ -59,6 +73,7 @@ type AccelDataDMP struct {
 // AccelDataUnion is union-like structure which is used for sending accel data over channels
 type AccelDataUnion struct {
 	raw AccelData
+	// rawExt AccelDataExt
 	dmp AccelDataDMP
 }
 

@@ -13,7 +13,7 @@ servoctl: $(SERVOCTL)/servoctl.go
 	go build $(SERVOCTL)/servoctl.go
 
 sync: $(SYNC)/sync.go
-	go build $(SYNC)/sync.go $(SYNC)/servo.go $(SYNC)/accelerometer.go $(SYNC)/lidar.go $(SYNC)/data-buffer.go $(SYNC)/merger.go 
+	go build $(SYNC)/sync.go $(SYNC)/servo.go $(SYNC)/accelerometer.go $(SYNC)/lidar.go $(SYNC)/data-buffer.go $(SYNC)/merger.go $(SYNC)/process.go 
 
 transmitter: $(TRANSMITTER)/transmitter.go
 	go build $(TRANSMITTER)/transmitter.go $(TRANSMITTER)/cloud.go
