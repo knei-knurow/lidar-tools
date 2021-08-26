@@ -6,9 +6,10 @@ using namespace stateestimation;
 using namespace std;
 
 int main() {
-  std::cout << "att-est: starting..." << std::endl;
+  cerr << "att-est: starting..." << std::endl;
 
   AttitudeEstimator est;
+  size_t n = 0;
   while (1) {
     double dt = 0.02;
     double a[3] = {};
@@ -26,6 +27,7 @@ int main() {
     // we don't have to rescale accel data because AttitudeEstimator doesn't
     // care read the documentation
 
+    cerr << "att-est: data received " << n++ << endl;
     est.update(dt, g[0], g[1], g[2], a[0], a[1], a[2], m[0], m[1], m[2]);
 
     double q[4];
@@ -34,8 +36,9 @@ int main() {
     // "\t" << q[3] << "\t" << endl;
     cout << q[0] << "\t" << q[1] << "\t" << q[2] << "\t" << q[3] << "\t"
          << endl;
+    cout.flush();
   }
 
-  std::cout << "att-est: exiting..." << std::endl;
+  cerr << "att-est: exiting..." << std::endl;
   return 0;
 }

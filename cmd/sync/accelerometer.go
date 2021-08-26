@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -88,7 +87,6 @@ type Accel struct {
 	deltaTime   float64
 	port        io.Reader
 	data        AccelDataUnion
-	process     Process
 }
 
 // MPU-6050 predefined calibrations
@@ -114,23 +112,23 @@ var (
 
 // StartLoop starts the accelerometer main loop
 func (accel *Accel) StartLoop(channel chan AccelDataUnion) (err error) {
-	if err := accel.process.StartProcess(); err != nil {
-		return fmt.Errorf("start accel process: %v", err)
-	}
-
-	scanner := bufio.NewScanner(accel.process.Stdout)
-	scanner.Split(bufio.ScanLines)
-
+	allowDataLost := true // until the first valid measurement is read
 	for {
-		accel.ReadData()
-		accel.PreprocessData()
-
-		for scanner.Scan() {
-
+		if err, dataLost := accel.ReadData(); err != nil {
+			if dataLost && allowDataLost {
+				continue
+			} else {
+				log.Println("error: problems in accel loop:", err)
+				time.Sleep(time.Second * 5)
+			}
 		}
-		if err := scanner.Err(); err != nil {
-			return err
+
+		if allowDataLost {
+			allowDataLost = false // valid measurement must be read here
+			log.Println("first valid accel measurement read")
 		}
+
+		// accel.PreprocessData()
 
 		channel <- accel.data
 	}
@@ -218,7 +216,7 @@ func float32frombytes(bytes []byte) float64 {
 }
 
 // ReadData reads and parses new measurement
-func (accel *Accel) ReadData() (err error) {
+func (accel *Accel) ReadData() (err error, dataLost bool) {
 	var frame frames.Frame
 	var frameLen int
 	if accel.mode == AccelModeRaw {
@@ -229,7 +227,7 @@ func (accel *Accel) ReadData() (err error) {
 
 	frame = make(frames.Frame, frameLen)
 	if err := accel.ReadAccelFrame(frame, frameLen); err != nil {
-		log.Printf("error: %s\n", err)
+		return fmt.Errorf("cannot read accel frame: %s", err), true
 	}
 
 	if accel.mode == AccelModeRaw {
@@ -238,9 +236,9 @@ func (accel *Accel) ReadData() (err error) {
 		err = accel.ProcessAccelFrameDMP(frame)
 	}
 	if err != nil {
-		return errors.New("cannot process frame")
+		return errors.New("cannot process accel frame"), false
 	}
-	return nil
+	return nil, false
 }
 
 // ReadAccelFrame is a low level function to read an accelerometer frame
@@ -250,7 +248,7 @@ func (accel *Accel) ReadAccelFrame(data []byte, length int) (err error) {
 		buf := make([]byte, 1)
 		_, err := accel.port.Read(buf)
 		if err != nil {
-			return errors.New("cannot read from port")
+			return fmt.Errorf("cannot read from port: %s", err)
 		}
 
 		if scan {

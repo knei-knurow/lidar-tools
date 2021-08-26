@@ -79,10 +79,6 @@ func main() {
 		deltaTime:   DeltaTimeDefault,
 		port:        port,
 		mode:        AccelModeRaw,
-		process: Process{
-			Args: []string{},
-			Path: accelExe, // TODO: Check if exists
-		},
 	}
 	servo := Servo{
 		data:       ServoData{positon: servoStartPos},
@@ -97,14 +93,14 @@ func main() {
 	log.Println("waiting for the servo")
 	time.Sleep(time.Second) // to be sure that the servo is on the right position
 
-	lidar := Lidar{ // TODO: make it more configurable from command line
-		RPM:  lidarRPM,
-		Mode: lidarMode,
-		Process: Process{
-			Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
-			Path: lidarExe, // TODO: Check if exists
-		},
-	}
+	// lidar := Lidar{ // TODO: make it more configurable from command line
+	// 	RPM:  lidarRPM,
+	// 	Mode: lidarMode,
+	// 	Process: Process{
+	// 		Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
+	// 		Path: lidarExe, // TODO: Check if exists
+	// 	},
+	// }
 
 	// Create communication channels
 	lidarChan := make(chan *LidarCloud) // LidarCloud is >64kB so it cannot be directly passed by a channel
@@ -117,7 +113,7 @@ func main() {
 	//var lidarBuffer *LidarCloud
 
 	// Start goroutines
-	go lidar.StartLoop(lidarChan)
+	// go lidar.StartLoop(lidarChan)
 	go servo.StartLoop(servoChan)
 	go accel.StartLoop(accelChan)
 
@@ -137,11 +133,8 @@ func main() {
 		case accelData := <-accelChan:
 			if accelOut {
 				if accel.mode == AccelModeRaw {
-					// writer.WriteString(fmt.Sprintf("A %d\t%d\t%d\t%d\t%d\t%d\t%d\n",
-					// 	accelData.raw.timept.UnixNano(),
-					// 	accelData.raw.xAccel, accelData.raw.yAccel, accelData.raw.zAccel,
-					// 	accelData.raw.xGyro, accelData.raw.yGyro, accelData.raw.zGyro))
-					writer.WriteString(fmt.Sprintf("%f\t%f\t%f\t%f\t%f\t%f\n",
+					writer.WriteString(fmt.Sprintf("A %d\t%f\t%f\t%f\t%f\t%f\t%f\n",
+						accelData.raw.timept.UnixNano(),
 						accelData.raw.xAccel, accelData.raw.yAccel, accelData.raw.zAccel,
 						accelData.raw.xGyro, accelData.raw.yGyro, accelData.raw.zGyro))
 				} else {
