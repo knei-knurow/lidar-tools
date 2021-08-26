@@ -112,6 +112,9 @@ var (
 
 // StartLoop starts the accelerometer main loop
 func (accel *Accel) StartLoop(channel chan AccelDataUnion) (err error) {
+	log.Printf("ACCEL SCALE = %f\n", accel.accelScale)
+	log.Printf("GYRO  SCALE = %f\n", accel.gyroScale)
+
 	allowDataLost := true // until the first valid measurement is read
 	for {
 		if err, dataLost := accel.ReadData(); err != nil {
@@ -126,9 +129,15 @@ func (accel *Accel) StartLoop(channel chan AccelDataUnion) (err error) {
 		if allowDataLost {
 			allowDataLost = false // valid measurement must be read here
 			log.Println("first valid accel measurement read")
+
+			if err := accel.Calibrate(1000); err != nil {
+				return fmt.Errorf("error: unable to calibrate accel: %s", err)
+			}
+			log.Println("accel is ready")
+			continue
 		}
 
-		// accel.PreprocessData()
+		accel.PreprocessData()
 
 		channel <- accel.data
 	}
@@ -262,5 +271,45 @@ func (accel *Accel) ReadAccelFrame(data []byte, length int) (err error) {
 			}
 		}
 	}
+	return nil
+}
+
+func (accel *Accel) Calibrate(n int) (err error) {
+	log.Println("***** ACCEL CALIBRATION STARTING *****")
+	for i := 3; i > 0; i-- {
+		log.Printf("accel calibration will start in %d seconds (n = %d)\n", i, n)
+		time.Sleep(time.Second)
+	}
+	log.Println("accel calibration started - do not move the device!")
+
+	for i := 0; i < n; i++ {
+		if err, _ := accel.ReadData(); err != nil {
+			return err
+		}
+
+		accel.calibration.xAccel += accel.data.raw.xAccel
+		accel.calibration.yAccel += accel.data.raw.yAccel
+		accel.calibration.zAccel += accel.data.raw.zAccel
+		accel.calibration.xGyro += accel.data.raw.xGyro
+		accel.calibration.yGyro += accel.data.raw.yGyro
+		accel.calibration.zGyro += accel.data.raw.zGyro
+	}
+
+	accel.calibration.xAccel /= -float64(n)
+	accel.calibration.yAccel /= -float64(n)
+	accel.calibration.zAccel /= -float64(n)
+	accel.calibration.xGyro /= -float64(n)
+	accel.calibration.yGyro /= -float64(n)
+	accel.calibration.zGyro /= -float64(n)
+
+	log.Printf("ACCEL X = %f\n", accel.calibration.xAccel)
+	log.Printf("ACCEL Y = %f\n", accel.calibration.yAccel)
+	log.Printf("ACCEL Z = %f\n", accel.calibration.zAccel)
+	log.Printf("GYRO  X = %f\n", accel.calibration.xGyro)
+	log.Printf("GYRO  Y = %f\n", accel.calibration.yGyro)
+	log.Printf("GYRO  Z = %f\n", accel.calibration.zGyro)
+
+	log.Println("***** ACCEL CALIBRATION FINISHED *****")
+
 	return nil
 }
