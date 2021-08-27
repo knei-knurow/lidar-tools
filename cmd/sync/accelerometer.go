@@ -289,7 +289,7 @@ func (accel *Accel) Calibrate(n int) (err error) {
 
 		accel.calibration.xAccel += accel.data.raw.xAccel
 		accel.calibration.yAccel += accel.data.raw.yAccel
-		accel.calibration.zAccel += accel.data.raw.zAccel
+		accel.calibration.zAccel += accel.data.raw.zAccel - accel.accelScale // add gravitational acceleration
 		accel.calibration.xGyro += accel.data.raw.xGyro
 		accel.calibration.yGyro += accel.data.raw.yGyro
 		accel.calibration.zGyro += accel.data.raw.zGyro
