@@ -9,6 +9,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/knei-knurow/attestimator"
 	"github.com/knei-knurow/frames"
 )
 
@@ -62,8 +63,8 @@ type AccelDataExt struct {
 	timept time.Time
 }
 
-// AccelDataDMP contains accel data processed by Digital Motion Processor (quaternions)
-type AccelDataDMP struct {
+// AccelDataQuat contains accel data as quaternions
+type AccelDataQuat struct {
 	qw     float64
 	qx     float64
 	qy     float64
@@ -71,11 +72,14 @@ type AccelDataDMP struct {
 	timept time.Time
 }
 
+// AccelDataDMP contains accel data processed by Digital Motion Processor (quaternions)
+type AccelDataDMP AccelDataQuat
+
 // AccelDataUnion is union-like structure which is used for sending accel data over channels
 type AccelDataUnion struct {
 	raw AccelData
 	// rawExt AccelDataExt
-	dmp AccelDataDMP
+	quat AccelDataQuat
 }
 
 // Accel is the main accelerometer control struct
@@ -115,6 +119,10 @@ func (accel *Accel) StartLoop(channel chan AccelDataUnion) (err error) {
 	log.Printf("ACCEL SCALE = %f\n", accel.accelScale)
 	log.Printf("GYRO  SCALE = %f\n", accel.gyroScale)
 
+	// attitude estimator
+	var est attestimator.Estimator
+	est.ResetAll(true)
+
 	allowDataLost := true // until the first valid measurement is read
 	for {
 		if err, dataLost := accel.ReadData(); err != nil {
@@ -137,7 +145,22 @@ func (accel *Accel) StartLoop(channel chan AccelDataUnion) (err error) {
 			continue
 		}
 
-		accel.PreprocessData()
+		accel.PreprocessDataForEst()
+
+		est.Update(0.02, // POSSIBLE ERROR SOURCE: 0.02 is hardcoded but it might be calculated using timept
+			accel.data.raw.xGyro,
+			accel.data.raw.yGyro,
+			accel.data.raw.zGyro,
+			accel.data.raw.xAccel,
+			accel.data.raw.yAccel,
+			accel.data.raw.zAccel,
+			0, 0, 0) // POSSIBLE ERROR SOURCE: we don't care about mag measurements
+		w, x, y, z := est.GetAttitude()
+		accel.data.quat.qw = math.Acos(w) * 2 * 57.2957795 // convertion qw to degrees
+		accel.data.quat.qx = x
+		accel.data.quat.qy = y
+		accel.data.quat.qz = z
+		accel.data.quat.timept = accel.data.raw.timept
 
 		channel <- accel.data
 	}
@@ -188,11 +211,11 @@ func (accel *Accel) ProcessAccelFrameDMP(frame frames.Frame) (err error) {
 	}
 
 	fdata := frame.Data()
-	accel.data.dmp.timept = timept // POSSIBLE ERROR SOURCE: Time of data receipt
-	accel.data.dmp.qw = float32frombytes(fdata[0:4])
-	accel.data.dmp.qx = float32frombytes(fdata[4:8])
-	accel.data.dmp.qy = float32frombytes(fdata[8:12])
-	accel.data.dmp.qz = float32frombytes(fdata[12:16])
+	accel.data.quat.timept = timept // POSSIBLE ERROR SOURCE: Time of data receipt
+	accel.data.quat.qw = float32frombytes(fdata[0:4])
+	accel.data.quat.qx = float32frombytes(fdata[4:8])
+	accel.data.quat.qy = float32frombytes(fdata[8:12])
+	accel.data.quat.qz = float32frombytes(fdata[12:16])
 
 	return nil
 }
@@ -205,6 +228,19 @@ func (accel *Accel) PreprocessData() {
 	accel.data.raw.xGyro = (accel.data.raw.xGyro + accel.calibration.xGyro) / accel.gyroScale
 	accel.data.raw.yGyro = (accel.data.raw.yGyro + accel.calibration.yGyro) / accel.gyroScale
 	accel.data.raw.zGyro = (accel.data.raw.zGyro + accel.calibration.zGyro) / accel.gyroScale
+}
+
+// PreprocessDataForEst converts raw accel data to meet attestimator requirements and
+// avoid unnecessary calculations
+func (accel *Accel) PreprocessDataForEst() {
+	// we don't care about accel units but we pay attention to the ratio between them
+	accel.data.raw.xAccel = (accel.data.raw.xAccel + accel.calibration.xAccel)
+	accel.data.raw.yAccel = (accel.data.raw.yAccel + accel.calibration.yAccel)
+	accel.data.raw.zAccel = (accel.data.raw.zAccel + accel.calibration.zAccel)
+	// we have to rescale gyro depending on the MPU settings and convert degs to rads
+	accel.data.raw.xGyro = (accel.data.raw.xGyro + accel.calibration.xGyro) / accel.gyroScale * 0.0174532925
+	accel.data.raw.yGyro = (accel.data.raw.yGyro + accel.calibration.yGyro) / accel.gyroScale * 0.0174532925
+	accel.data.raw.zGyro = (accel.data.raw.zGyro + accel.calibration.zGyro) / accel.gyroScale * 0.0174532925
 }
 
 // mergeBytes merges two bytest to int

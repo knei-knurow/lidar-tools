@@ -23,6 +23,7 @@ var (
 	accelExe string
 
 	accelOut bool
+	estOut   bool
 	servoOut bool
 	lidarOut bool
 
@@ -46,6 +47,7 @@ func init() {
 	flag.StringVar(&accelExe, "accelexe", "attitude-estimator.exe", "attitude estimator executable")
 
 	flag.BoolVar(&accelOut, "accel", false, "print accelerometer data on stdout")
+	flag.BoolVar(&estOut, "est", false, "print attitude estimator data on stdout")
 	flag.BoolVar(&servoOut, "servo", false, "print set servo position on stdout")
 	flag.BoolVar(&lidarOut, "lidar", false, "print lidar data on stdout")
 
@@ -108,9 +110,9 @@ func main() {
 	accelChan := make(chan AccelDataUnion)
 
 	// Create data buffers
+	//var lidarBuffer *LidarCloud
 	accelBuffer := NewAccelDataBuffer(32)
 	servoBuffer := NewServoDataBuffer(32)
-	//var lidarBuffer *LidarCloud
 
 	// Start goroutines
 	// go lidar.StartLoop(lidarChan)
@@ -139,10 +141,14 @@ func main() {
 						accelData.raw.xGyro, accelData.raw.yGyro, accelData.raw.zGyro))
 				} else {
 					writer.WriteString(fmt.Sprintf("a %d\t%f\t%f\t%f\t%f\n",
-						accelData.dmp.timept.UnixNano(),
-						accelData.dmp.qw, accelData.dmp.qx, accelData.dmp.qy, accelData.dmp.qz))
+						accelData.quat.timept.UnixNano(),
+						accelData.quat.qw, accelData.quat.qx, accelData.quat.qy, accelData.quat.qz))
 				}
 			}
+			// if estOut {
+			writer.WriteString(fmt.Sprintf("%f\t%f\t%f\t%f\n",
+				accelData.quat.qw, accelData.quat.qx, accelData.quat.qy, accelData.quat.qz))
+			// }
 			accelBuffer.Append(accelData)
 		}
 		writer.Flush()
