@@ -1,6 +1,9 @@
 package main
 
-import "math"
+import (
+	"log"
+	"math"
+)
 
 // Vec2 represents a (X, Y) vector.
 type Vec2 struct {
@@ -70,4 +73,20 @@ func QuatVec3Mult(q1 *Quat, v *Vec3) Vec3 {
 // RotateVec3ByQuat rotates (x, y, z) vector by a normalised quaternion.
 func RotateVec3ByQuat(v *Vec3, q *Quat) (w Vec3) {
 	return QuatVec3Mult(q, v)
+}
+
+type Fusion struct {
+}
+
+func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
+	if cloud.Size == 0 {
+		return
+	}
+
+	// timePerPt := float64(cloud.TimeDiff) / float64(cloud.Size) * 1000
+
+	log.Println(cloud.TimeBegin, "#####", cloud.timeEnd)
+	for i := 0; i < int(cloud.Size); i++ {
+		// log.Println("--------", cloud.TimeBegin.Add(time.Microsecond*time.Duration(timePerPt*float64(i))))
+	}
 }

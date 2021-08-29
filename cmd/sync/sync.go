@@ -114,10 +114,13 @@ func main() {
 	accelBuffer := NewAccelDataBuffer(32)
 	servoBuffer := NewServoDataBuffer(32)
 
-	// Start goroutines
+	// Goroutines
 	go servo.StartLoop(servoChan)
 	go accel.StartLoop(accelChan)
 	lidarStarted := false
+
+	// Fusion stuff
+	var fusion Fusion
 
 	// Main loop
 	for {
@@ -127,7 +130,7 @@ func main() {
 				writer.WriteString(fmt.Sprintf("L %d %d\n", lidarData.ID, lidarData.Size))
 			}
 			lidarBuffer = lidarData
-			log.Println(lidarBuffer.Size)
+			fusion.Update(lidarBuffer, &accelBuffer)
 		case servoData := <-servoChan:
 			if servoOut {
 				writer.WriteString(fmt.Sprintf("S %d %d\n", servoData.timept.UnixNano(), servoData.positon))
