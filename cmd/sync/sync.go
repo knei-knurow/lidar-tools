@@ -145,10 +145,10 @@ func main() {
 						accelData.quat.qw, accelData.quat.qx, accelData.quat.qy, accelData.quat.qz))
 				}
 			}
-			// if estOut {
-			writer.WriteString(fmt.Sprintf("%f\t%f\t%f\t%f\n",
-				accelData.quat.qw, accelData.quat.qx, accelData.quat.qy, accelData.quat.qz))
-			// }
+			if estOut {
+				writer.WriteString(fmt.Sprintf("%f\t%f\t%f\t%f\n",
+					accelData.quat.qw, accelData.quat.qx, accelData.quat.qy, accelData.quat.qz))
+			}
 			accelBuffer.Append(accelData)
 		}
 		writer.Flush()
