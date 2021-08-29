@@ -127,7 +127,7 @@ func main() {
 				writer.WriteString(fmt.Sprintf("L %d %d\n", lidarData.ID, lidarData.Size))
 			}
 			lidarBuffer = lidarData
-			log.Println(lidarBuffer.timeEnd)
+			log.Println(lidarBuffer.Size)
 		case servoData := <-servoChan:
 			if servoOut {
 				writer.WriteString(fmt.Sprintf("S %d %d\n", servoData.timept.UnixNano(), servoData.positon))
