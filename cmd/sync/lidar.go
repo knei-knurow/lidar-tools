@@ -58,6 +58,7 @@ func (lidar *Lidar) StartLoop(channel chan *LidarCloud) (err error) {
 		return fmt.Errorf("start process: %v", err)
 	}
 
+	log.Println("lidar loop is running")
 	scanner := bufio.NewScanner(lidar.Process.Stdout)
 	scanner.Split(bufio.ScanLines)
 	for {
