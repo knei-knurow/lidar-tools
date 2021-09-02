@@ -156,7 +156,8 @@ func (accel *Accel) StartLoop(channel chan AccelDataUnion) (err error) {
 			accel.data.raw.zAccel,
 			0, 0, 0) // POSSIBLE ERROR SOURCE: we don't care about mag measurements
 		w, x, y, z := est.GetAttitude()
-		accel.data.quat.qw = math.Acos(w) * 2 * 57.2957795 // convertion qw to degrees
+		// accel.data.quat.qw = math.Acos(w) * 2 * 57.2957795 // convertion qw to degrees
+		accel.data.quat.qw = w
 		accel.data.quat.qx = x
 		accel.data.quat.qy = y
 		accel.data.quat.qz = z

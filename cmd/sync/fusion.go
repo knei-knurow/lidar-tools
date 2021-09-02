@@ -115,7 +115,6 @@ func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
 
 		// 1. convert (angle, dist) to (X, Y)
 		pt2 := AngleDistToPoint2(&cloud.Data[i])
-		pt2 = Vec2{float64(i), 100}
 
 		// 2. modify (X, Y) to (X, Y, Z) where Z=0
 		pt3 := Vec3{pt2.X, pt2.Y, 0}
