@@ -90,19 +90,19 @@ func main() {
 		port:       port,
 		delayMs:    50,
 	}
-	log.Println("setting the servo to the start position")
+	log.Println("servo is setting to the start position")
 	servo.SetPosition(servoStartPos)
 	log.Println("waiting for the servo")
 	time.Sleep(time.Second) // to be sure that the servo is on the right position
 
-	// lidar := Lidar{ // TODO: make it more configurable from command line
-	// 	RPM:  lidarRPM,
-	// 	Mode: lidarMode,
-	// 	Process: Process{
-	// 		Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
-	// 		Path: lidarExe, // TODO: Check if exists
-	// 	},
-	// }
+	lidar := Lidar{ // TODO: make it more configurable from command line
+		RPM:  lidarRPM,
+		Mode: lidarMode,
+		Process: Process{
+			Args: []string{lidarPortName, "--rpm", fmt.Sprint(lidarRPM), "--mode", fmt.Sprint(lidarMode)},
+			Path: lidarExe, // TODO: Check if exists
+		},
+	}
 
 	// Create communication channels
 	lidarChan := make(chan *LidarCloud) // LidarCloud is >64kB so it cannot be directly passed by a channel
@@ -110,14 +110,17 @@ func main() {
 	accelChan := make(chan AccelDataUnion)
 
 	// Create data buffers
-	//var lidarBuffer *LidarCloud
+	var lidarBuffer *LidarCloud
 	accelBuffer := NewAccelDataBuffer(32)
 	servoBuffer := NewServoDataBuffer(32)
 
-	// Start goroutines
-	// go lidar.StartLoop(lidarChan)
+	// Goroutines
 	go servo.StartLoop(servoChan)
 	go accel.StartLoop(accelChan)
+	lidarStarted := false
+
+	// Fusion stuff
+	var fusion Fusion
 
 	// Main loop
 	for {
@@ -126,13 +129,20 @@ func main() {
 			if lidarOut {
 				writer.WriteString(fmt.Sprintf("L %d %d\n", lidarData.ID, lidarData.Size))
 			}
-			//lidarBuffer = lidarData
+			lidarBuffer = lidarData
+			fusion.Update(lidarBuffer, &accelBuffer)
 		case servoData := <-servoChan:
 			if servoOut {
 				writer.WriteString(fmt.Sprintf("S %d %d\n", servoData.timept.UnixNano(), servoData.positon))
 			}
 			servoBuffer.Append(servoData)
 		case accelData := <-accelChan:
+			// when the accel is ready and its first measurement is read, start the lidar
+			if !lidarStarted {
+				go lidar.StartLoop(lidarChan)
+				lidarStarted = true
+			}
+
 			if accelOut {
 				if accel.mode == AccelModeRaw {
 					writer.WriteString(fmt.Sprintf("A %d\t%f\t%f\t%f\t%f\t%f\t%f\n",
@@ -145,10 +155,10 @@ func main() {
 						accelData.quat.qw, accelData.quat.qx, accelData.quat.qy, accelData.quat.qz))
 				}
 			}
-			// if estOut {
-			writer.WriteString(fmt.Sprintf("%f\t%f\t%f\t%f\n",
-				accelData.quat.qw, accelData.quat.qx, accelData.quat.qy, accelData.quat.qz))
-			// }
+			if estOut {
+				writer.WriteString(fmt.Sprintf("%f\t%f\t%f\t%f\n",
+					accelData.quat.qw, accelData.quat.qx, accelData.quat.qy, accelData.quat.qz))
+			}
 			accelBuffer.Append(accelData)
 		}
 		writer.Flush()

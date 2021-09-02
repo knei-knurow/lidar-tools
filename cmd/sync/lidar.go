@@ -19,20 +19,20 @@ const (
 	rplidarModeDefault     = rplidarModeSensitivity
 )
 
-// Point is a single angle + distance measurement.
-type Point struct {
-	Angle float32 // Angle in degrees.
-	Dist  float32 // Distance in millimeters.
+// AngleDist is a single angle + distance measurement.
+type AngleDist struct {
+	Angle float64 // Angle in degrees.
+	Dist  float64 // Distance in millimeters.
 }
 
 // LidarCloud is one full (360deg) lidar point cloud.
 type LidarCloud struct {
-	ID        int                     //
-	TimeBegin time.Time               // time point of starting line read (line starting with '!').
-	TimeDiff  int                     // number of milliseconds of current cloud measurement (received from lidar-scan).
-	timeEnd   time.Time               // timeBegin increased by timeDiff milliseconds
-	Data      [lidarMaxDataSize]Point // Measurements data.
-	Size      uint                    // Number of used points in Data.
+	ID        int                         //
+	TimeBegin time.Time                   // time point of starting line read (line starting with '!').
+	TimeDiff  int                         // number of milliseconds of current cloud measurement (received from lidar-scan).
+	timeEnd   time.Time                   // timeBegin increased by timeDiff milliseconds
+	Data      [lidarMaxDataSize]AngleDist // Measurements data.
+	Size      uint                        // Number of used points in Data.
 	Ready     bool
 }
 
@@ -58,6 +58,7 @@ func (lidar *Lidar) StartLoop(channel chan *LidarCloud) (err error) {
 		return fmt.Errorf("start process: %v", err)
 	}
 
+	log.Println("lidar loop is running")
 	scanner := bufio.NewScanner(lidar.Process.Stdout)
 	scanner.Split(bufio.ScanLines)
 	for {
@@ -65,8 +66,9 @@ func (lidar *Lidar) StartLoop(channel chan *LidarCloud) (err error) {
 		cloud := LidarCloud{
 			ID:        lidar.nextCloudCount + 1,
 			TimeDiff:  lidar.nextCloudTimeDiff,
-			TimeBegin: lidar.nextCloudTimeBegin, // POSSIBLE ERROR SOURCE: using milliseconds by lidar-scan
-			timeEnd:   lidar.nextCloudTimeBegin.Add(time.Millisecond * time.Duration(lidar.nextCloudTimeDiff))}
+			TimeBegin: lidar.nextCloudTimeBegin,                                                                // POSSIBLE ERROR SOURCE: using milliseconds by lidar-scan
+			timeEnd:   lidar.nextCloudTimeBegin.Add(time.Millisecond * time.Duration(lidar.nextCloudTimeDiff)), // POSSIBLE ERROR SOURCE: not 100% accurate
+		}
 
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -102,7 +104,7 @@ func (lidar *Lidar) ProcessLine(line string, cloud *LidarCloud) (err error) {
 		}
 		cloud.Ready = true
 	default:
-		var angle, dist float32
+		var angle, dist float64
 		if _, err := fmt.Sscanf(line, "%f %f", &angle, &dist); err != nil {
 			return fmt.Errorf("invalid data line: \"%s\"", line)
 		}
@@ -111,7 +113,7 @@ func (lidar *Lidar) ProcessLine(line string, cloud *LidarCloud) (err error) {
 		if cloud.Size >= lidarMaxDataSize {
 			return errors.New("data buffer overflow")
 		}
-		cloud.Data[cloud.Size] = Point{angle, dist}
+		cloud.Data[cloud.Size] = AngleDist{angle, dist}
 	}
 	return nil
 }
