@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"math"
 )
 
@@ -83,10 +83,43 @@ func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
 		return
 	}
 
+	// estimated time of a single point measurement
 	// timePerPt := float64(cloud.TimeDiff) / float64(cloud.Size) * 1000
 
-	log.Println(cloud.TimeBegin, "#####", cloud.timeEnd)
+	// var q0 AccelDataQuat
+	// for j := 0; j < accel.size; j++ { // from the latest to the earliest
+	// 	a0, _ := accel.Get(j)
+	// 	if a0.quat.timept.Before(cloud.TimeBegin) {
+	// 		q0 = a0.quat
+	// 		break
+	// 	}
+	// }
+
+	fmt.Printf("# %d\t%d\n", cloud.ID, cloud.TimeBegin.UnixNano())
 	for i := 0; i < int(cloud.Size); i++ {
-		// log.Println("--------", cloud.TimeBegin.Add(time.Microsecond*time.Duration(timePerPt*float64(i))))
+		if cloud.Data[i].Dist == 0 {
+			continue
+		}
+
+		// estimated time point of the i-th measurement
+		// t := cloud.TimeBegin.Add(time.Microsecond * time.Duration(timePerPt*float64(i)))
+
+		// POSSIBLE ERROR SOURCE: there was an idea to take an average of two accel measurements
+		// which would be biased towards the later or earlier one (depending on the t value).
+		// This approach requires additional quaternion computation, more info here:
+		// https://math.stackexchange.com/q/162863/527542
+
+		// fmt.Printf("a=%f d=%f   t=%d   qw=%f qx=%f qy=%f qz=%f\n", cloud.Data[i].Angle, cloud.Data[i].Dist, t.UnixNano(), q0.qw, q0.qx, q0.qy, q0.qz)
+
+		// 1. convert (angle, dist) to (X, Y)
+		pt2 := AngleDistToPoint2(&cloud.Data[i])
+
+		// 2. modify (X, Y) to (X, Y, Z) where Z=0
+		pt3 := Vec3{pt2.X, pt2.Y, 0}
+
+		// 3. rotate (X, Y, Z) by accel quaternion to get (X', Y', Z')
+		// pt3 = RotateVec3ByQuat(&pt3, &Quat{q0.qw, q0.qx, q0.qy, q0.qz})
+
+		fmt.Printf("%f\t%f\t%f\n", pt3.X, pt3.Y, pt3.Z)
 	}
 }

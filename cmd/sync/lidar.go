@@ -66,8 +66,9 @@ func (lidar *Lidar) StartLoop(channel chan *LidarCloud) (err error) {
 		cloud := LidarCloud{
 			ID:        lidar.nextCloudCount + 1,
 			TimeDiff:  lidar.nextCloudTimeDiff,
-			TimeBegin: lidar.nextCloudTimeBegin, // POSSIBLE ERROR SOURCE: using milliseconds by lidar-scan
-			timeEnd:   lidar.nextCloudTimeBegin.Add(time.Millisecond * time.Duration(lidar.nextCloudTimeDiff))}
+			TimeBegin: lidar.nextCloudTimeBegin,                                                                // POSSIBLE ERROR SOURCE: using milliseconds by lidar-scan
+			timeEnd:   lidar.nextCloudTimeBegin.Add(time.Millisecond * time.Duration(lidar.nextCloudTimeDiff)), // POSSIBLE ERROR SOURCE: not 100% accurate
+		}
 
 		for scanner.Scan() {
 			line := scanner.Text()
