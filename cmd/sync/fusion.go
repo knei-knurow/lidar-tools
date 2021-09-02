@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math"
 )
 
@@ -86,16 +87,17 @@ func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
 	// estimated time of a single point measurement
 	// timePerPt := float64(cloud.TimeDiff) / float64(cloud.Size) * 1000
 
-	// var q0 AccelDataQuat
-	// for j := 0; j < accel.size; j++ { // from the latest to the earliest
-	// 	a0, _ := accel.Get(j)
-	// 	if a0.quat.timept.Before(cloud.TimeBegin) {
-	// 		q0 = a0.quat
-	// 		break
-	// 	}
-	// }
+	var q0 AccelDataQuat
+	for j := 0; j < accel.size; j++ { // from the latest to the earliest
+		a0, _ := accel.Get(j)
+		if a0.quat.timept.Before(cloud.TimeBegin) {
+			q0 = a0.quat
+			break
+		}
+	}
 
-	fmt.Printf("# %d\t%d\n", cloud.ID, cloud.TimeBegin.UnixNano())
+	// fmt.Printf("# %d\t%f %f %f %f\n", cloud.ID, q0.qw, q0.qx, q0.qy, q0.qz)
+	log.Printf("%f %f %f %f\n", q0.qw, q0.qx, q0.qy, q0.qz)
 	for i := 0; i < int(cloud.Size); i++ {
 		if cloud.Data[i].Dist == 0 {
 			continue
@@ -113,12 +115,13 @@ func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
 
 		// 1. convert (angle, dist) to (X, Y)
 		pt2 := AngleDistToPoint2(&cloud.Data[i])
+		pt2 = Vec2{float64(i), 100}
 
 		// 2. modify (X, Y) to (X, Y, Z) where Z=0
 		pt3 := Vec3{pt2.X, pt2.Y, 0}
 
 		// 3. rotate (X, Y, Z) by accel quaternion to get (X', Y', Z')
-		// pt3 = RotateVec3ByQuat(&pt3, &Quat{q0.qw, q0.qx, q0.qy, q0.qz})
+		pt3 = RotateVec3ByQuat(&pt3, &Quat{q0.qw, q0.qx, q0.qy, q0.qz})
 
 		fmt.Printf("%f\t%f\t%f\n", pt3.X, pt3.Y, pt3.Z)
 	}
