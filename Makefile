@@ -1,11 +1,10 @@
-all: receiver servoctl sync transmitter scandummy attitude-estimator
+all: receiver servoctl sync transmitter scandummy
 
 RECEIVER := ./cmd/receiver
 SERVOCTL:= ./cmd/servoctl
 SYNC := ./cmd/sync
 TRANSMITTER := ./cmd/transmitter
 SCAN_DUMMY := ./misc/scan-dummy
-ATTITUDE_ESTIMATOR := ./attitude-estimator
 
 receiver: $(RECEIVER)/receiver.go
 	go build $(RECEIVER)/receiver.go
