@@ -75,6 +75,12 @@ func RotateVec3ByQuat(v *Vec3, q *Quat) (w Vec3) {
 	return QuatVec3Mult(q, v)
 }
 
+func RotateVec2(v *Vec2, a float64) (w Vec2) {
+	w.X = v.X*math.Cos(a) - v.Y*math.Sin(a)
+	w.Y = v.Y*math.Cos(a) + v.X*math.Sin(a)
+	return
+}
+
 type Fusion struct {
 }
 
@@ -97,7 +103,7 @@ func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
 
 	for i := 0; i < int(cloud.Size); i++ {
 		if cloud.Data[i].Dist == 0 {
-			continue
+			// continue
 		}
 
 		// estimated time point of the i-th measurement
@@ -112,6 +118,8 @@ func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
 
 		// 1. convert (angle, dist) to (X, Y)
 		pt2 := AngleDistToPoint2(&cloud.Data[i])
+
+		pt2 = RotateVec2(&pt2, -math.Pi/4)
 
 		// 2. modify (X, Y) to (X, Y, Z) where Z=0
 		pt3 := Vec3{pt2.X, pt2.Y, 0}

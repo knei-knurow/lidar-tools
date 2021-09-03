@@ -86,7 +86,7 @@ func main() {
 		data:       ServoData{positon: servoStartPos},
 		positonMin: servoMinPos,
 		positonMax: servoMaxPos,
-		vector:     30,
+		vector:     9,
 		port:       port,
 		delayMs:    50,
 	}
