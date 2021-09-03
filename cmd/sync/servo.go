@@ -73,6 +73,8 @@ func (servo *Servo) SetPosition(pos uint16) (err error) {
 // StartLoop starts a loop responsible for controlling the servo position
 // and updading the channel with its new calculated position.
 func (servo *Servo) StartLoop(channel chan ServoData) {
+	time.Sleep(time.Second * 2) // just wait a while for the lidar
+
 	for {
 		servo.Move()
 		if err := servo.SendData(); err != nil {
