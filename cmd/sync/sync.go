@@ -86,9 +86,9 @@ func main() {
 		data:       ServoData{positon: servoStartPos},
 		positonMin: servoMinPos,
 		positonMax: servoMaxPos,
-		vector:     9,
+		vector:     1,
 		port:       port,
-		delayMs:    50,
+		delayMs:    30,
 	}
 	log.Println("servo is setting to the start position")
 	servo.SetPosition(servoStartPos)
