@@ -75,6 +75,7 @@ func RotateVec3ByQuat(v *Vec3, q *Quat) (w Vec3) {
 	return QuatVec3Mult(q, v)
 }
 
+// RotateVec2 rotates (x, y) around origin (0, 0) by a rads.
 func RotateVec2(v *Vec2, a float64) (w Vec2) {
 	w.X = v.X*math.Cos(a) - v.Y*math.Sin(a)
 	w.Y = v.Y*math.Cos(a) + v.X*math.Sin(a)
@@ -103,7 +104,7 @@ func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
 
 	for i := 0; i < int(cloud.Size); i++ {
 		if cloud.Data[i].Dist == 0 {
-			// continue
+			continue
 		}
 
 		// estimated time point of the i-th measurement
@@ -114,17 +115,16 @@ func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
 		// This approach requires additional quaternion computation, more info here:
 		// https://math.stackexchange.com/q/162863/527542
 
-		// fmt.Printf("a=%f d=%f   t=%d   qw=%f qx=%f qy=%f qz=%f\n", cloud.Data[i].Angle, cloud.Data[i].Dist, t.UnixNano(), q0.qw, q0.qx, q0.qy, q0.qz)
-
 		// 1. convert (angle, dist) to (X, Y)
 		pt2 := AngleDistToPoint2(&cloud.Data[i])
 
+		// 2. rotate lidar cloud depending on the head construction
 		pt2 = RotateVec2(&pt2, -math.Pi/4)
 
-		// 2. modify (X, Y) to (X, Y, Z) where Z=0
+		// 3. modify (X, Y) to (X, Y, Z) where Z=0
 		pt3 := Vec3{pt2.X, pt2.Y, 0}
 
-		// 3. rotate (X, Y, Z) by accel quaternion to get (X', Y', Z')
+		// 4. rotate (X, Y, Z) by accel quaternion to get (X', Y', Z')
 		pt3 = RotateVec3ByQuat(&pt3, &Quat{q0.qw, q0.qx, q0.qy, q0.qz})
 
 		fmt.Printf("%f\t%f\t%f\n", pt3.X, pt3.Y, pt3.Z)
