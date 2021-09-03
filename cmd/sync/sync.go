@@ -86,14 +86,17 @@ func main() {
 		data:       ServoData{positon: servoStartPos},
 		positonMin: servoMinPos,
 		positonMax: servoMaxPos,
-		vector:     50,
+		vector:     30,
 		port:       port,
 		delayMs:    50,
 	}
 	log.Println("servo is setting to the start position")
 	servo.SetPosition(servoStartPos)
+	if err := servo.SendData(); err != nil {
+		log.Println("unable to send servo data:", err)
+	}
 	log.Println("waiting for the servo")
-	time.Sleep(time.Second) // to be sure that the servo is on the right position
+	time.Sleep(time.Second * 1) // to be sure that the servo is on the right position
 
 	lidar := Lidar{ // TODO: make it more configurable from command line
 		RPM:  lidarRPM,
@@ -115,9 +118,9 @@ func main() {
 	servoBuffer := NewServoDataBuffer(32)
 
 	// Goroutines
-	go servo.StartLoop(servoChan)
 	go accel.StartLoop(accelChan)
 	lidarStarted := false
+	servoStarted := false
 
 	// Fusion stuff
 	var fusion Fusion
@@ -141,6 +144,10 @@ func main() {
 			if !lidarStarted {
 				go lidar.StartLoop(lidarChan)
 				lidarStarted = true
+			}
+			if !servoStarted {
+				go servo.StartLoop(servoChan)
+				servoStarted = true
 			}
 
 			if accelOut {

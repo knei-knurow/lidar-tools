@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math"
 )
 
@@ -96,8 +95,6 @@ func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
 		}
 	}
 
-	// fmt.Printf("# %d\t%f %f %f %f\n", cloud.ID, q0.qw, q0.qx, q0.qy, q0.qz)
-	log.Printf("%f %f %f %f\n", q0.qw, q0.qx, q0.qy, q0.qz)
 	for i := 0; i < int(cloud.Size); i++ {
 		if cloud.Data[i].Dist == 0 {
 			continue
