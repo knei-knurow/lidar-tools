@@ -1,3 +1,5 @@
+.PHONY: all receiver servoctl sync transmitter scandummy clean
+
 all: receiver servoctl sync transmitter scandummy
 
 RECEIVER := ./receiver
