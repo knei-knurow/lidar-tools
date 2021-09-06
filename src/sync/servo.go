@@ -14,7 +14,7 @@ const (
 	servoMinPos    = 1000
 	servoCalibPos  = 2500
 	servoMaxPos    = 3000
-	servoUnitToDeg = -0.04 // 1 servo position unit = servoUnitToDeg * deg
+	servoUnitToDeg = -0.05 // 1 servo position unit = servoUnitToDeg * deg
 )
 
 // ServoData is a struct containing information about servo state
@@ -30,6 +30,7 @@ type Servo struct {
 	positonMin   uint16    // min position
 	positonCalib uint16    // calibration position
 	positonStart uint16    // scan start position
+	unitToDeg    float64   // 1 servo position unit = servoUnitToDeg * deg
 	vector       uint16    //
 	port         io.Writer // port to write controlling frames
 	delayMs      uint      // ms delay between orders

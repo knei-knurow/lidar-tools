@@ -29,6 +29,7 @@ var (
 	servoCalib uint
 	servoStart uint
 	servoMax   uint
+	servoUnit  float64
 
 	// Misc args
 	cloudRotation float64
@@ -55,6 +56,7 @@ func init() {
 	flag.UintVar(&servoCalib, "servocalib", servoCalibPos, "servo position for accel calib (most horizontal position)")
 	flag.UintVar(&servoStart, "servostart", servoMaxPos, "servo position for scan start")
 	flag.UintVar(&servoMax, "servomax", servoMaxPos, "max servo pos (might be corrected by AVR software)")
+	flag.Float64Var(&servoUnit, "servounit", servoUnitToDeg, "1 servo position unit = servounit * deg")
 
 	// Misc args
 	flag.Float64Var(&cloudRotation, "cloudrotation", PrototypeCloudRotation, "each scanned 2D cloud will be rotated by CloudRotation radians, this value depends on the physical lidar location")
@@ -94,6 +96,7 @@ func main() {
 		positonCalib: uint16(servoCalib),
 		positonStart: uint16(servoStart),
 		vector:       uint16(servoStep),
+		unitToDeg:    servoUnit,
 		port:         port,
 		delayMs:      servoDelay,
 	}

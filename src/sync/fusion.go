@@ -153,9 +153,11 @@ func (fusion *Fusion) UpdateWithServo(cloud *LidarCloud, servoData *ServoDataBuf
 		}
 	}
 
+	deg := (float64(s0.positon) - float64(servo.positonCalib)) * servo.unitToDeg
+
 	for i := 0; i < int(cloud.Size); i++ {
 		if cloud.Data[i].Dist == 0 {
-			// continue
+			continue
 		}
 
 		// 1. convert (angle, dist) to (X, Y)
@@ -164,14 +166,13 @@ func (fusion *Fusion) UpdateWithServo(cloud *LidarCloud, servoData *ServoDataBuf
 		// 2. rotate lidar cloud depending on the head construction
 		pt2 = RotateVec2(&pt2, fusion.CloudRotation)
 
-		// // 3.
-		deg := (float64(s0.positon) - float64(servo.positonStart)) * servoUnitToDeg
+		// 3.
 		pt2t := RotateVec2(&Vec2{pt2.X, 0}, DegToRad(float64(deg)))
 
 		// 4.
 		pt3 := Vec3{pt2t.X, pt2.Y, pt2t.Y}
 		fmt.Printf("%f\t%f\t%f\n", pt3.X, pt3.Y, pt3.Z)
 	}
-	log.Println((float64(s0.positon) - float64(servo.positonStart)) * servoUnitToDeg)
+	log.Println("angle", "=", deg)
 	fusion.cloudsCnt++
 }
