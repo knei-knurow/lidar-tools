@@ -1,2 +1,17 @@
 $output = "output/" + (Get-Date).tostring("dd-MM-yyyy-hh-mm-ss") + ".txt"
-./sync.exe > $output 
+$cloudrotation = -3.14159 / 4
+./sync.exe `
+    --avrport=COM13 `
+    --avrbaud=19200 `
+    --lidarexe=lidar.exe `
+    --lidarport=COM4 `
+    --lidarmode=3 `
+    --lidarpm=1000 `
+    --servostep=2 `
+    --servodelay=40 `
+    --servomin=1000 `
+    --servocalib=2500 `
+    --servostart=3000 `
+    --servomax=3000 `
+    --cloudrotation=$cloudrotation `
+    > $output 

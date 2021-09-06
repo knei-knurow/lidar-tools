@@ -12,7 +12,7 @@ import (
 // Servo constants
 const (
 	servoMinPos    = 1000
-	servoStartPos  = 2500
+	servoCalibPos  = 2500
 	servoMaxPos    = 3000
 	servoUnitToDeg = 0.1 // 1 servo position unit = servoUnitToDeg * deg
 )

@@ -22,6 +22,14 @@ var (
 	lidarRPM  int
 	lidarExe  string
 
+	// Servo flags
+	servoStep  uint
+	servoDelay uint
+	servoMin   uint
+	servoCalib uint
+	servoStart uint
+	servoMax   uint
+
 	// Misc args
 	cloudRotation float64
 )
@@ -40,6 +48,14 @@ func init() {
 	flag.IntVar(&lidarMode, "lidarmode", rplidarModeDefault, "RPLIDAR mode (3 - best for indoor, 4 - best for outdoor)")
 	flag.IntVar(&lidarRPM, "lidarpm", 660, "RPLIDAR given revolutions per minute")
 
+	// Servo args
+	flag.UintVar(&servoStep, "servostep", 2, "single servo step size")
+	flag.UintVar(&servoDelay, "servodelay", 40, "delay in ms between steps")
+	flag.UintVar(&servoMin, "servomin", servoMinPos, "min servo pos (might be corrected by AVR software)")
+	flag.UintVar(&servoCalib, "servocalib", servoCalibPos, "servo position for accel calib (most horizontal position)")
+	flag.UintVar(&servoStart, "servostart", servoMaxPos, "servo position for scan start")
+	flag.UintVar(&servoMax, "servomax", servoMaxPos, "max servo pos (might be corrected by AVR software)")
+
 	// Misc args
 	flag.Float64Var(&cloudRotation, "cloudrotation", PrototypeCloudRotation, "each scanned 2D cloud will be rotated by CloudRotation radians, this value depends on the physical lidar location")
 
@@ -48,8 +64,11 @@ func init() {
 }
 
 func main() {
+	log.Println(cloudRotation)
+
 	writer := bufio.NewWriter(os.Stdout)
 
+	log.Println("opening AVR port")
 	config := &serial.Config{
 		Name: avrPort,
 		Baud: avrBaudRate,
@@ -63,7 +82,7 @@ func main() {
 
 	// Sources of data initialization
 	accel := Accel{
-		calibration: accelCalib,
+		calibration: noAccelCalib,
 		accelScale:  AccelScaleDefault,
 		gyroScale:   GyroScaleDefault,
 		deltaTime:   DeltaTimeDefault,
@@ -71,15 +90,15 @@ func main() {
 		mode:        AccelModeRaw,
 	}
 	servo := Servo{
-		data:       ServoData{positon: servoStartPos},
-		positonMin: servoMinPos,
-		positonMax: servoMaxPos,
-		vector:     2,
+		data:       ServoData{positon: uint16(servoCalib)},
+		positonMin: uint16(servoMin),
+		positonMax: uint16(servoMax),
+		vector:     uint16(servoStep),
 		port:       port,
-		delayMs:    40,
+		delayMs:    servoDelay,
 	}
-	log.Println("servo is setting to the start position")
-	servo.SetPosition(servoStartPos)
+	log.Println("servo is setting to the calibration position")
+	servo.SetPosition(servoCalibPos)
 	if err := servo.SendData(); err != nil {
 		log.Println("unable to send servo data:", err)
 	}
@@ -123,14 +142,22 @@ func main() {
 		case servoData := <-servoChan:
 			servoBuffer.Append(servoData)
 		case accelData := <-accelChan:
-			// when the accel is ready and its first measurement is read, start the lidar
+			// when the accel is ready and its first measurement is read, start the servo and lidar
+			if !servoStarted {
+				log.Println("servo is setting to the start position")
+				servo.SetPosition(uint16(servoStart))
+				if err := servo.SendData(); err != nil {
+					log.Println("unable to send servo data:", err)
+				}
+				log.Println("waiting for the servo")
+				time.Sleep(time.Second * 2) // to be sure that the servo is on the right position
+
+				go servo.StartLoop(servoChan)
+				servoStarted = true
+			}
 			if !lidarStarted {
 				go lidar.StartLoop(lidarChan)
 				lidarStarted = true
-			}
-			if !servoStarted {
-				go servo.StartLoop(servoChan)
-				servoStarted = true
 			}
 			accelBuffer.Append(accelData)
 		}
