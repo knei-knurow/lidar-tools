@@ -20,3 +20,5 @@
 # other
 /datasets
 .DS_Store
+output/*
+!output/example.txt

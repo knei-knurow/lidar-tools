@@ -12,7 +12,7 @@ import (
 // Servo constants
 const (
 	servoMinPos    = 1000
-	servoStartPos  = 2500
+	servoCalibPos  = 2500
 	servoMaxPos    = 3000
 	servoUnitToDeg = 0.1 // 1 servo position unit = servoUnitToDeg * deg
 )
@@ -41,9 +41,11 @@ func (servo *Servo) Move() {
 	case servo.data.positon < servo.positonMin:
 		servo.data.positon = servo.positonMin
 		servo.vector = -servo.vector
+		log.Println("servo min position reached")
 	case servo.data.positon > servo.positonMax:
 		servo.data.positon = servo.positonMax
 		servo.vector = -servo.vector
+		log.Println("servo max position reached")
 	}
 }
 

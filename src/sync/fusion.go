@@ -83,7 +83,12 @@ func RotateVec2(v *Vec2, a float64) (w Vec2) {
 }
 
 type Fusion struct {
+	CloudRotation float64 // each scanned 2D cloud will be rotated by CloudRotation radians
 }
+
+const (
+	PrototypeCloudRotation = -math.Pi / 4 // cloud rotation for the first lidar head prototype
+)
 
 func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
 	if cloud.Size == 0 {
@@ -119,7 +124,7 @@ func (fusion *Fusion) Update(cloud *LidarCloud, accel *AccelDataBuffer) {
 		pt2 := AngleDistToPoint2(&cloud.Data[i])
 
 		// 2. rotate lidar cloud depending on the head construction
-		pt2 = RotateVec2(&pt2, -math.Pi/4)
+		pt2 = RotateVec2(&pt2, fusion.CloudRotation)
 
 		// 3. modify (X, Y) to (X, Y, Z) where Z=0
 		pt3 := Vec3{pt2.X, pt2.Y, 0}
