@@ -171,7 +171,7 @@ func (fusion *Fusion) UpdateWithServo(cloud *LidarCloud, servoData *ServoDataBuf
 
 		// 4.
 		pt3 := Vec3{pt2t.X, pt2.Y, pt2t.Y}
-		fmt.Printf("%f\t%f\t%f\n", pt3.X, pt3.Y, pt3.Z)
+		fmt.Printf("%f\t%f\t%f\n", pt3.X, -pt3.Y, pt3.Z)
 	}
 	log.Println("angle", "=", deg)
 	fusion.cloudsCnt++

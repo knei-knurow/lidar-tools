@@ -16,13 +16,16 @@ var (
 	avrPort     string
 	avrBaudRate int
 
-	// Lidar flags
+	// Lidar args
 	lidarPort string
 	lidarMode int
 	lidarRPM  int
 	lidarExe  string
 
-	// Servo flags
+	// Accel args
+	accelUse bool
+
+	// Servo args
 	servoStep  uint
 	servoDelay uint
 	servoMin   uint
@@ -48,6 +51,9 @@ func init() {
 	flag.StringVar(&lidarPort, "lidarport", "COM4", "RPLIDAR serial communication port")
 	flag.IntVar(&lidarMode, "lidarmode", rplidarModeDefault, "RPLIDAR mode (3 - best for indoor, 4 - best for outdoor)")
 	flag.IntVar(&lidarRPM, "lidarpm", 660, "RPLIDAR given revolutions per minute")
+
+	// Accel args
+	flag.BoolVar(&accelUse, "acceluse", false, "use accelerometer measurements as a priority")
 
 	// Servo args
 	flag.UintVar(&servoStep, "servostep", 2, "single servo step size")
@@ -82,6 +88,7 @@ func main() {
 
 	// Sources of data initialization
 	accel := Accel{
+		use:         accelUse,
 		calibration: noAccelCalib,
 		accelScale:  AccelScaleDefault,
 		gyroScale:   GyroScaleDefault,
