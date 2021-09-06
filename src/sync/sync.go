@@ -64,8 +64,6 @@ func init() {
 }
 
 func main() {
-	log.Println(cloudRotation)
-
 	writer := bufio.NewWriter(os.Stdout)
 
 	log.Println("opening AVR port")
