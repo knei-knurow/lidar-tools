@@ -84,6 +84,7 @@ type AccelDataUnion struct {
 
 // Accel is the main accelerometer control struct
 type Accel struct {
+	use         bool // if false, accel data will be completely ignored
 	mode        int
 	calibration AccelData
 	accelScale  float64
@@ -116,6 +117,12 @@ var (
 
 // StartLoop starts the accelerometer main loop
 func (accel *Accel) StartLoop(channel chan AccelDataUnion) (err error) {
+	if !accel.use {
+		log.Println("accel is unused")
+		channel <- accel.data
+		return
+	}
+
 	log.Printf("ACCEL SCALE = %f\n", accel.accelScale)
 	log.Printf("GYRO  SCALE = %f\n", accel.gyroScale)
 

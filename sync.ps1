@@ -6,12 +6,14 @@ $cloudrotation = -3.14159 / 4
     --lidarexe=lidar.exe `
     --lidarport=COM4 `
     --lidarmode=3 `
-    --lidarpm=1000 `
+    --lidarpm=250 `
     --servostep=2 `
-    --servodelay=40 `
+    --servodelay=80 `
     --servomin=1000 `
     --servocalib=2500 `
     --servostart=3000 `
     --servomax=3000 `
+    --servounit=-0.047 `
     --cloudrotation=$cloudrotation `
+    --acceluse=false `
     > $output 
