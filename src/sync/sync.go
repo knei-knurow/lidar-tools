@@ -88,12 +88,14 @@ func main() {
 		mode:        AccelModeRaw,
 	}
 	servo := Servo{
-		data:       ServoData{positon: uint16(servoCalib)},
-		positonMin: uint16(servoMin),
-		positonMax: uint16(servoMax),
-		vector:     uint16(servoStep),
-		port:       port,
-		delayMs:    servoDelay,
+		data:         ServoData{positon: uint16(servoCalib)},
+		positonMin:   uint16(servoMin),
+		positonMax:   uint16(servoMax),
+		positonCalib: uint16(servoCalib),
+		positonStart: uint16(servoStart),
+		vector:       uint16(servoStep),
+		port:         port,
+		delayMs:      servoDelay,
 	}
 	log.Println("servo is setting to the calibration position")
 	servo.SetPosition(servoCalibPos)
@@ -136,7 +138,8 @@ func main() {
 		select {
 		case lidarData := <-lidarChan:
 			lidarBuffer = lidarData
-			fusion.Update(lidarBuffer, &accelBuffer)
+			// fusion.Update(lidarBuffer, &accelBuffer)
+			fusion.UpdateWithServo(lidarBuffer, &servoBuffer, &servo)
 		case servoData := <-servoChan:
 			servoBuffer.Append(servoData)
 		case accelData := <-accelChan:

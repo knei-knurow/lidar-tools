@@ -14,7 +14,7 @@ const (
 	servoMinPos    = 1000
 	servoCalibPos  = 2500
 	servoMaxPos    = 3000
-	servoUnitToDeg = 0.1 // 1 servo position unit = servoUnitToDeg * deg
+	servoUnitToDeg = -0.04 // 1 servo position unit = servoUnitToDeg * deg
 )
 
 // ServoData is a struct containing information about servo state
@@ -25,12 +25,14 @@ type ServoData struct {
 
 // Servo is the main servo control struct
 type Servo struct {
-	data       ServoData // servo data
-	positonMax uint16    // max position
-	positonMin uint16    // min position
-	vector     uint16    //
-	port       io.Writer // port to write controlling frames
-	delayMs    uint      // ms delay between orders
+	data         ServoData // servo data
+	positonMax   uint16    // max position
+	positonMin   uint16    // min position
+	positonCalib uint16    // calibration position
+	positonStart uint16    // scan start position
+	vector       uint16    //
+	port         io.Writer // port to write controlling frames
+	delayMs      uint      // ms delay between orders
 }
 
 // Move sends the move order to the servo and updates its movement vector.

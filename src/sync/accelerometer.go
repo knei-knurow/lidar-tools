@@ -138,9 +138,9 @@ func (accel *Accel) StartLoop(channel chan AccelDataUnion) (err error) {
 			allowDataLost = false // valid measurement must be read here
 			log.Println("first valid accel measurement read")
 
-			if err := accel.Calibrate(1000); err != nil {
-				return fmt.Errorf("error: unable to calibrate accel: %s", err)
-			}
+			// if err := accel.Calibrate(1000); err != nil {
+			// 	return fmt.Errorf("error: unable to calibrate accel: %s", err)
+			// }
 			log.Println("accel is ready")
 			continue
 		}
