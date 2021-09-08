@@ -2,11 +2,11 @@
 
 all: receiver servoctl sync transmitter scandummy
 
-RECEIVER := ./src/receiver
-SERVOCTL:= ./src/servoctl
-SYNC := ./src/sync
-TRANSMITTER := ./src/transmitter
-SCAN_DUMMY := ./src/scan-dummy
+RECEIVER := ./cmd/receiver
+SERVOCTL:= ./cmd/servoctl
+SYNC := ./cmd/sync
+TRANSMITTER := ./cmd/transmitter
+SCAN_DUMMY := ./cmd/scan-dummy
 
 receiver: $(RECEIVER)/receiver.go
 	go build $(RECEIVER)/receiver.go
